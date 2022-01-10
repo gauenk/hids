@@ -1,0 +1,9 @@
+setup.py
+hids/__init__.py
+hids.egg-info/PKG-INFO
+hids.egg-info/SOURCES.txt
+hids.egg-info/dependency_links.txt
+hids.egg-info/requires.txt
+hids.egg-info/top_level.txt
+hids/src/__init__.py
+hids/testing/__init__.py

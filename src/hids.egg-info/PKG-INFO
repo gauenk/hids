@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: hids
+Version: 1.0.0
+Summary: A python implementation of HIDS
+Home-page: https://github.com/gauenk/hids
+Author: Kent Gauen
+Author-email: gauenk@purdue.edu
+License: MIT
+Keywords: hypothesis testing,influence functions,data subsampling
+Platform: UNKNOWN
+
+HIDS: hypothesis testing influence functions for data subsampling
+
