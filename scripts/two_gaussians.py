@@ -1,14 +1,15 @@
 
 import hids
+from hids import testing
 
-def two_gaussians(mean,cov_cat,sigma,bisze,num,dim,snum):
+def two_gaussians():
 
     # -- create experiment fields --
     fields = {"mean":[0],"mean_cat":["ave","lb-ub"],"mbounds":[(0.01,10)],
               "cov_cat":["diag","strong_tri","weak_tri"],"hypoType":["hot","mmd"],
               "sigma":[0.2,0.1,0.05],"bsize":[128],"num":[500],"dim":[98],"snum":[100]}
-    exps = hids.testing.get_exp_mesh(fields)
-    ds_fields = ["mean","cov_cat","sigma","bsize","num","dim"]
+    exps = testing.get_exp_mesh(fields)
+    ds_fields = ["mean_cat","mean","mbounds","cov_cat","sigma","bsize","num","dim"]
 
     # -- init results --
     results = []
@@ -20,7 +21,7 @@ def two_gaussians(mean,cov_cat,sigma,bisze,num,dim,snum):
         snum = exp['snum']
 
         # -- get data --
-        clean,noisy = hids.testing.load_gaussian_data(*ds_args)
+        clean,noisy = testing.load_gaussian_data(*ds_args)
 
         # -- gt --
         gt_vals,gt_inds = hids.subset_data(clean,sigma,snum,"l2")
@@ -47,3 +48,6 @@ def two_gaussians(mean,cov_cat,sigma,bisze,num,dim,snum):
         result = exp + inds + cmps
         results.append(result)
     return results
+
+if __name__ == "__main__":
+    two_gaussians()

@@ -3,12 +3,12 @@ cmake/*
 data/*
 output/*
 *.py[co]
-__pycache__/
+*__pycache__/
 *~
 \#*
 \.\#*
-/python/swigpyvnlb_avx2.swig
 lib/hids.egg-info/
+lib/build
 
 *.swp
 *.swo
