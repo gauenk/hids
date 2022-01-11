@@ -3,4 +3,4 @@
 cd src/
 python setup.py clean --all
 cd ..
-python -m pip install -e ./src --user
+python -m pip install -e ./lib --user

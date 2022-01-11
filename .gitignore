@@ -8,7 +8,7 @@ __pycache__/
 \#*
 \.\#*
 /python/swigpyvnlb_avx2.swig
-src/hids.egg-info/
+lib/hids.egg-info/
 
 *.swp
 *.swo
