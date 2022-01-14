@@ -29,3 +29,12 @@ def gather_data(data,inds):
     inds = repeat(inds,'b n -> b n d',d=dim)
     rdata = th.gather(data,1,inds)
     return rdata
+
+def clone(array):
+    if torch.is_tensor(array):
+        return array.clone()
+    elif isinstance(array,np.ndarray):
+        return array.copy()
+    else:
+        tarray = type(array)
+        raise TypeError(f"Uknown array type [{tarray}]")
