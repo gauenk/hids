@@ -22,7 +22,8 @@ def gather_data(data,inds):
     """
 
     data.shape = (B,N,D)
-    inds.shape = (B,N)
+    inds.shape = (B,N_s)
+    N_s <= N
 
     """
     bsize,num,dim = data.shape
@@ -31,7 +32,7 @@ def gather_data(data,inds):
     return rdata
 
 def clone(array):
-    if torch.is_tensor(array):
+    if th.is_tensor(array):
         return array.clone()
     elif isinstance(array,np.ndarray):
         return array.copy()
