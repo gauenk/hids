@@ -66,7 +66,6 @@ def update_state(state,pstate,cnum):
     # print("state.vals.shape: ",state.vals.shape)
     # print("state.inds.shape: ",state.inds.shape)
     # print("state.vecs.shape: ",state.vecs.shape)
-
     aug1_inds = repeat(inds,'b bw sw -> b bw sw n',n=sN)
     aug2_inds = repeat(aug1_inds,'b bw sw n -> b bw sw n d',d=D)
 
@@ -88,6 +87,10 @@ def update_state(state,pstate,cnum):
     check_v = check[0,0].item()
     print("check_v: ",check_v)
     nz_inds = th.nonzero(check != check_v)
+    print("pstate.inds.shape: ",pstate.inds.shape)
+    print("pstate.inds[18,0,:,:cnum+2]: ",pstate.inds[18,0,:,:cnum+2])
+    print("state.inds: ",state.inds[18,:,:cnum+2])
+    print("inds: ",inds[18].ravel())
     if len(nz_inds) > 0:
         print(nz_inds)
         bidx = nz_inds[0,0]
@@ -111,9 +114,17 @@ def init_state(state,data,idx):
 def inverse_inds(mask):
     b,w,n = mask.shape
     # print(mask[0,:].sum(1),mask[0,:].max(1))
-    inds = th.nonzero(mask < 0.5)[:,-1]
+    inds = th.nonzero(mask < 0.5)[:,2]
     # print(inds.shape,b,w,n)
     inds = rearrange(inds,'(b w n) -> b w n',b=b,w=w)
+    unum = None
+    for p in range(inds.shape[1]):
+        for b in range(inds.shape[0]):
+            # print(b,p,len(inds[b,p].unique()))
+            if unum is None:
+                unum = len(inds[b,p].unique())
+            else:
+                continue
     # print("inds.shape: ",inds.shape)
     return inds
 
@@ -136,6 +147,10 @@ def set_pstate_vecs(pstate,state,data,cnum):
     for p in range(nparticles):
         pstate.vecs[:,p,:,cnum,:] = th.gather(data,1,aug_inds[:,p])
         pstate.inds[:,p,:,cnum] = inds[:,p,:]#th.gather(,1,inds[:,p])
+        # NOTE: this is where "duplicates" get added right now.
+        # the seq "state.imask -> inds -> pstate.inds[@cnum]"
+        # implies that "pstate.inds" updates ONLY at cnum
+        # rather than the entire vector.
 
     return rnum
 

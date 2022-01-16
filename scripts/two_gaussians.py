@@ -1,5 +1,6 @@
 
 # -- python --
+import numpy as np
 import torch as th
 from itertools import chain
 
@@ -65,4 +66,6 @@ def two_gaussians():
     return results
 
 if __name__ == "__main__":
+    np.random.seed(123)
+    th.manual_seed(123)
     two_gaussians()
