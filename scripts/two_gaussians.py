@@ -36,15 +36,15 @@ def two_gaussians():
         l2_vals,l2_inds = hids.subset_search(noisy,sigma,snum,"l2")
 
         # -- coreset growth --
-        cg_vals,cg_inds = hids.subset_search(noisy,sigma,snum,"coreset")
+        cg_vals,cg_inds = hids.subset_search(noisy,sigma,snum,"l2")
 
         # -- random subsetting --
-        rh_vals,rh_inds = hids.subset_search(noisy,sigma,snum,"rand-hypo",
+        rh_vals,rh_inds = hids.subset_search(noisy,sigma,snum,"beam",
                                              hypoType=hypoType)
 
-        # -- gradient based --
-        gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"grad-hypo",
-                                             hypoType=hypoType)
+        # # -- gradient based --
+        # gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"grad-hypo",
+        #                                      hypoType=hypoType)
 
         # -- compare --
         l2_cmp = hids.compare_inds(gt_inds,l2_inds)
