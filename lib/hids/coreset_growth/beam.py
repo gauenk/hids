@@ -9,21 +9,28 @@ from einops import rearrange,repeat
 
 # -- local --
 from hids.l2_search import l2_search
+from hids.utils import optional
 from .svf import get_state_value_function
 from .state_utils import *
 
-def beam_search(data,sigma,snum,bwidth=10,swidth=None,svf_method="svar",**kwargs):
+def beam_search(data,sigma,snum,bwidth=10,swidth=20,svf_method="svar",
+                num_search=30,**kwargs):
 
     # -- shapes --
     verbose = False
     device = data.device
     bsize,num,dim = data.shape
-    if swidth is None: swidth = 20#num
+    # print("bsize,num,dim: ",bsize,num,dim)
+    # print("bwidth,swidth,snum,num_search: ",bwidth,swidth,snum,num_search)
+    # print("-- info --")
+    # print(data.max().item(),data.min().item(),sigma)
 
     # -- get state value function --
     sv_fxn = get_state_value_function(svf_method)
     sv_params = edict()
     sv_params.sigma = sigma
+    sv_params.pshape = optional(kwargs,'pshape',(2,3,7,7))
+    sv_params.edge_weight = optional(kwargs,'edge_weight',0.1)
 
     # -- create and init tensors --
     state,pstate = alloc_tensors(bsize,num,snum,dim,bwidth,swidth,device)
@@ -32,7 +39,7 @@ def beam_search(data,sigma,snum,bwidth=10,swidth=None,svf_method="svar",**kwargs
 
     # -- l2 search --
     l2_order = l2_search(data,data[:,[0]],sigma)[1]
-    print("data.shape: ",data.shape)
+    l2_order = optional(kwargs,'l2_order',l2_order)
 
     # -- exec search --
     if verbose: print("snum: ",snum)
@@ -48,15 +55,12 @@ def beam_search(data,sigma,snum,bwidth=10,swidth=None,svf_method="svar",**kwargs
         # -- keep best "bwidth" states --
         update_state(state,pstate,cnum)
 
-        # # -- update --
-        # print(state.vals[:3])
-
         # -- update num --
         cnum += 1
 
         # -- terminate early --
         if verbose: print("[cnum/snum]: %d/%d" % (cnum,snum))
-        if cnum > 40:
+        if cnum >= num_search:
             terminate_early(state,data,l2_order,snum,cnum,sv_fxn,sv_params)
             break
 

@@ -59,6 +59,8 @@ def update_state(state,pstate,cnum):
     B,bW,sW,sN,D = pstate.vecs.shape
 
     # -- take topk --
+    # pstate.vals
+    # vals = rearrange(vals,'b w s -> b (w s)')
     inds = th.topk(pstate.vals,1,2,False).indices
     aug1_inds = repeat(inds,'b bw sw -> b bw sw n',n=sN)
     aug2_inds = repeat(aug1_inds,'b bw sw n -> b bw sw n d',d=D)
@@ -68,9 +70,12 @@ def update_state(state,pstate,cnum):
     state.inds[...] = th.gather(pstate.inds,2,aug1_inds)[:,:,0]
     state.vecs[...] = th.gather(pstate.vecs,2,aug2_inds)[:,:,0]
 
-    # -- imask -
+    # -- update mask from inds --
     state.imask[...] = 0
     state.imask[...].scatter_(2,state.inds[:,:,:cnum+1],1)
+
+def topk_across_square():
+    pass
 
 def select_final_state(state):
 

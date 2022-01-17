@@ -6,13 +6,14 @@ import numpy as np
 from .sample_cov import sample_cov_cat
 from .sample_mean import sample_mean_cat
 
-def load_gaussian_data(mean_cat,mean,mbounds,cov_cat,sigma,bsize,num,dim):
+def load_gaussian_data(mean_cat,mean,mbounds,cov_cat,sigma,bsize,num,dim,nmean_eq):
 
     # -- cov samples --
     cov_samples = sample_cov_cat(cov_cat,sigma,bsize,num,dim)
 
     # -- mean samples --
     mean_samples = sample_mean_cat(mean_cat,mean,mbounds,bsize,num,dim)
+    if nmean_eq > 0: mean_samples[:,:nmean_eq,:] = 0.
 
     # -- create samples --
     noisy = cov_samples + mean_samples

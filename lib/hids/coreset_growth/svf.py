@@ -6,9 +6,11 @@ State value functions
 # -- linalg --
 import torch as th
 import numpy as np
+from einops import rearrange,repeat
 
 # -- local --
 from hids.utils import optional
+from hids.sobel import apply_sobel_to_patches
 
 def get_state_value_function(method):
     if method == "svar":
@@ -21,6 +23,22 @@ def get_state_value_function(method):
 def sample_var(vals,data,params):
     sigma = optional(params,'sigma',0.)
     mean = data.mean(-2,keepdim=True)
-    vals[...] = ((data - mean)**2).mean((-2,-1))
-    vals[...] = th.abs(vals - sigma)
+    vals[...] = ((data - mean)**2).mean((-2,-1)).pow(0.5)
+    vals[...] = th.abs(vals - sigma) + mean.abs().mean((-2,-1))
     return vals
+
+def sample_var_blur(vals,data,params):
+
+    # -- sample variance --
+    sample_var(vals,data,params)
+
+    # -- [keep good edges] --
+    B,W = data.shape[:2]
+    mean = data.mean(3)
+    data_rs = rearrange(mean,'b w s d -> (b w s) 1 d')
+    edges = apply_sobel_to_patches(data_rs,params.pshape)
+    edges = rearrange(edges,'(b w s) 1 -> b w s',b=B,w=W)
+    vals[...] = vals[...] *(1 - params.edge_weight * th.abs(edges))
+
+    return vals
+
