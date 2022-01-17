@@ -43,17 +43,23 @@ def two_gaussians():
         rh_vals,rh_inds = hids.subset_search(noisy,sigma,snum,"beam",
                                              hypoType=hypoType)
 
-        # # -- gradient based --
+        print("rh_inds.shape: ",rh_inds.shape)
+        print("l2_inds.shape: ",l2_inds.shape)
+
+        # -- gradient based --
         # gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"grad-hypo",
         #                                      hypoType=hypoType)
+        gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"l2",
+                                             hypoType=hypoType)
 
         # -- compare --
         l2_cmp = hids.compare_inds(gt_inds,l2_inds)
         cg_cmp = hids.compare_inds(gt_inds,cg_inds)
         rh_cmp = hids.compare_inds(gt_inds,rh_inds)
         gh_cmp = hids.compare_inds(gt_inds,gh_inds)
-        print(l2_cmp)
-        print(cg_cmp)
+        print("l2: ",l2_cmp)
+        print("rh: ",rh_cmp)
+        print("cg: ",cg_cmp)
 
         # -- get results --
         inds = {'gt_inds':gt_inds,'l2_inds':l2_inds,'cg_inds':cg_inds,

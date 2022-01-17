@@ -18,14 +18,9 @@ def get_state_value_function(method):
     else:
         raise ValueError(f"Update reference [{method}]")
 
-def sample_var(data,params):
+def sample_var(vals,data,params):
     sigma = optional(params,'sigma',0.)
-    print("data.shape: ",data.shape)
     mean = data.mean(-2,keepdim=True)
-    print("mean.shape: ",mean.shape)
-    delta = (data - mean)**2
-    print("delta.shape: ",delta.shape)
-    delta = delta.mean((-2,-1))
-    delta = th.abs(delta - sigma)
-    print("delta.shape: ",delta.shape)
-    return delta
+    vals[...] = ((data - mean)**2).mean((-2,-1))
+    vals[...] = th.abs(vals - sigma)
+    return vals

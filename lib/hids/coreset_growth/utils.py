@@ -75,9 +75,6 @@ def update_mask(mask,inds):
 
     # -- valid inds are not "-1" --
     vinds = th.nonzero(th.all(inds!=-1,1))[:,0]
-    print("vinds.shape: ",vinds.shape)
-    print("inds.shape: ",inds.shape)
-    print("mask.shape: ",mask.shape)
 
     # -- update inds w.r.t zero mask --
     db_mask = subset_mask(mask,mask == 0) # to add
