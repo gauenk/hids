@@ -1,3 +1,11 @@
+"""
+
+ToDo:
+
+1. re-order the remaining based on current state
+2. compute state value using the entire selected subset from current state
+
+"""
 
 # -- python --
 from easydict import EasyDict as edict
