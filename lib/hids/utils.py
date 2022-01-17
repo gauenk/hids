@@ -11,7 +11,7 @@ def compare_inds(gt,prop):
     delta = delta.type(th.float)
     delta = delta.mean(1)
     delta = delta.mean(0)
-    return delta
+    return delta.item()
 
 def optional(pydict,field,default):
     if pydict is None: return default

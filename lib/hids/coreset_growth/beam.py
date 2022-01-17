@@ -48,15 +48,15 @@ def beam_search(data,sigma,snum,bwidth=10,swidth=None,svf_method="svar",**kwargs
         # -- keep best "bwidth" states --
         update_state(state,pstate,cnum)
 
-        # -- update --
-        print(state.vals[:3])
+        # # -- update --
+        # print(state.vals[:3])
 
         # -- update num --
         cnum += 1
 
         # -- terminate early --
         if verbose: print("[cnum/snum]: %d/%d" % (cnum,snum))
-        if cnum > 10:
+        if cnum > 40:
             terminate_early(state,data,l2_order,snum,cnum,sv_fxn,sv_params)
             break
 

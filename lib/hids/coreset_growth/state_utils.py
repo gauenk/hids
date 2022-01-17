@@ -25,8 +25,6 @@ def terminate_early(state,data,l2_order,snum,cnum,sv_fxn,sv_params):
     # -- shapes --
     device = state.imask.device
     bsize,nparticles = state.imask.shape[:2]
-
-    # -- append the first N elements to state (via l2-norm order) --
     bsize,num,dim = data.shape
 
     # -- init vec --
@@ -106,13 +104,12 @@ def set_pstate(pstate,state,data,order,cnum):
     # -- find remaining indices for search --
     remain = remaining_ordered_inds(state,order,cnum)
     rnum = remain.shape[-1]
-    # remain.shape = (batch,nparticles,num-cnum)
+    # info: remain.shape = (batch,nparticles,num-cnum)
 
     # -- select remaining indices for search --
     remain = select_prop_inds(remain,sW,cnum)
     aug_remain = repeat(remain,'b s n -> b s n d',d=D)
-    # remain.shape = (batch,nparticles,nsearch)
-
+    # info: remain.shape = (batch,nparticles,nsearch)
 
     # -- create the proposed state --
     nparticles = nP
@@ -126,11 +123,6 @@ def set_pstate(pstate,state,data,order,cnum):
         # -- "append" next state @ cnum --
         pstate.vecs[:,p,:,cnum,:] = th.gather(data,1,aug_remain[:,p])
         pstate.inds[:,p,:,cnum] = remain[:,p,:]#th.gather(,1,inds[:,p])
-
-        # NOTE: this is where "duplicates" get added right now.
-        # the seq "state.imask -> inds -> pstate.inds[@cnum]"
-        # implies that "pstate.inds" updates ONLY at cnum
-        # rather than the entire vector.
 
     return rnum
 
@@ -184,11 +176,30 @@ def remaining_inds(mask):
     inds = rearrange(inds,'(b w n) -> b w n',b=b,w=w)
     return inds
 
+# -------------------------------------
+#
+# -->       Select Prop.            <--
+#
+# -------------------------------------
+
 def select_prop_inds(rinds,sW,cnum):
     if cnum == 1:
         return strided_inds(rinds,sW)
     else:
-        return rinds[:,:,:sW]
+        # return rinds[:,:,:sW]
+        return select_random_inds(rinds,sW)
+
+def select_random_inds(rinds,sW):
+
+    # -- create strided indices --
+    device = rinds.device
+    bsize,np,rnum = rinds.shape
+    sinds = create_random_inds(bsize,np,sW,device,rnum)
+
+    # -- gather remaining inds --
+    strided_inds = th.gather(rinds,2,sinds)
+
+    return strided_inds
 
 def strided_inds(rinds,sW):
 
@@ -202,14 +213,25 @@ def strided_inds(rinds,sW):
 
     return strided_inds
 
-def create_strided_inds(bsize,np,sW,device,rmax):
+
+def create_random_inds(bsize,np,sW,device,rnum):
+    # -- alloc --
+    inds = th.zeros(bsize,np,sW,dtype=th.long,device=device)
+
+    # -- create blocks --
+    for p in range(np):
+        vec = th.randperm(rnum)[:sW]
+        inds[:,p,:] = repeat(vec,'s -> b s',b=bsize)
+    return inds
+
+def create_strided_inds(bsize,np,sW,device,rnum):
 
     # -- alloc --
     inds = th.zeros(bsize,np,sW,dtype=th.long,device=device)
 
     # -- create blocks --
     for p in range(np):
-        vec = th.remainder(th.arange(sW)+sW*p,rmax)
+        vec = th.remainder(th.arange(sW)+sW*p,rnum)
         inds[:,p,:] = repeat(vec,'s -> b s',b=bsize)
     return inds
 
