@@ -76,11 +76,10 @@ def two_gaussians():
         # gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"grad-hypo",
         #                                      hypoType=hypoType)
         gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"beam",
-                                             num_search=100)
-
+                                             num_search=60)
         # -- too many iters! --
         tm_vals,tm_inds = hids.subset_search(noisy,sigma,snum,"beam",
-                                             num_search=2)
+                                             num_search=30)
 
         # -- compare --
         l2_cmp = hids.compare_inds(gt_inds,l2_inds)
