@@ -24,14 +24,16 @@ def select_samples_to_search(remaining_inds,nsearch,cnum):
         return strided_inds(remaining_inds,nsearch)
     else:
         # return rinds[:,:,:nsearch]
-        return select_random_inds(remaining_inds,nsearch)
+        return strided_inds(remaining_inds,nsearch)
+        # return select_random_inds(remaining_inds,nsearch)
 
 def select_random_inds(rinds,sW):
 
     # -- create strided indices --
     device = rinds.device
     bsize,np,rnum = rinds.shape
-    sinds = create_random_inds(bsize,np,sW,device,rnum)
+    sinds = create_wrandom_inds(bsize,np,sW,device,rnum)
+    # sinds = create_random_inds(bsize,np,sW,device,rnum)
 
     # -- gather remaining inds --
     strided_inds = th.gather(rinds,2,sinds)
@@ -50,6 +52,16 @@ def strided_inds(rinds,sW):
 
     return strided_inds
 
+def create_wrandom_inds(bsize,np,sW,device,rnum):
+    # -- alloc --
+    inds = th.zeros(bsize,np,sW,dtype=th.long,device=device)
+    menu = 1./(th.arange(rnum)+1)
+
+    # -- create blocks --
+    for p in range(np):
+        inds[:,p,:] = th.multinomial(menu,sW)
+
+    return inds
 
 def create_random_inds(bsize,np,sW,device,rnum):
     # -- alloc --

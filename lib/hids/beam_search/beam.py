@@ -54,6 +54,7 @@ def beam_search(data,sigma,snum,bwidth=10,swidth=10,svf_method="svar",
         propose_state(state,pstate,data,sigma,cnum)
         compute_state_value(pstate,sigma,cnum,sv_fxn,sv_params)
         update_state(state,pstate,data,sigma,cnum)
+        # print(state.vals[0])
 
         # -- update num --
         cnum += 1

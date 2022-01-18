@@ -70,7 +70,7 @@ def two_gaussians():
 
         # -- random subsetting --
         rh_vals,rh_inds = hids.subset_search(noisy,sigma,snum,"beam",
-                                             num_search = means_eq)
+                                             num_search = 10)#means_eq)
 
         # -- gradient based --
         # gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"grad-hypo",

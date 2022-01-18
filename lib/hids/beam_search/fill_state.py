@@ -40,18 +40,21 @@ def fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum):
     pstate.inds[...,cnum] = prop_samples[...]
 
     # -- "append" next vectors @ cnum --
+    # print("pre: ",pstate.vecs[0,0,:,cnum-1:cnum+1,0])
     for p in range(pstate.nparticles):
         aug_inds = repeat(prop_samples[:,p],'b n -> b n d',d=D)
         pstate.vecs[:,p,:,cnum,:] = th.gather(data,1,aug_inds)
+    # print("post: ",pstate.vecs[0,0,:,cnum-1:cnum+1,0])
+    # exit(0)
 
     # -- fill remaining vectors using newly computed ordering --
-    fill_vecs_by_order(pstate,data,sigma,cnum)
+    # fill_vecs_by_order(pstate,data,sigma,cnum)
 
 def fill_vecs_by_order(pstate,data,sigma,cnum):
 
     # -- fill remaining vecs using ordering --
     bsize,num,dim = data.shape
-    fnum = pstate.snum - cnum
+    fnum = pstate.snum - cnum - 1
     for p in range(pstate.nparticles):
         for s in range(pstate.nsearch):
 
@@ -67,68 +70,11 @@ def fill_vecs_by_order(pstate,data,sigma,cnum):
             # -- select remaining inds in order --
             rinds_ordered(pstate.inds[:,p,s,:cnum],pstate.order,
                           cnum,pstate.snum,pstate.remaining)
+            if p == 0:
+                print(p,s,pstate.remaining[0])
 
             # -- append remaining inds in ordered --
             aug_remaining = repeat(pstate.remaining,'b n -> b n d',d=dim)
-            pstate.vecs[:,p,s,cnum:,:] = th.gather(data,1,aug_remaining[:,:fnum])
-
-def set_pstate(pstate,state,data,sigma,cnum,use_full=True):
-
-    # -- shape --
-    device = data.device
-    D = data.shape[-1]
-    B,nP,sW,max_num,dim = pstate.vecs.shape
-    snum = pstate.snum
-
-    # -- compute refs --
-    rindex = get_ref_index(state,cnum)
-    refs = th.mean(state.vecs[:,:,:,:rindex],3,keepdim=True)
-
-    # -- create the proposed state --
-    nparticles = nP
-    for p in range(nparticles):
-        for s in range(nsearch):
-
-            # -- compute ordering [using alloced mem] --
-            pstate.delta[...] = ((data - refs[:,p,s])**2).mean(2)
-            pstate.delta[...] = th.abs(pstate.delta - s_sigma)
-            pstate.order[...] = th.argsort(pstate.delta,1)
-            order = pstate.order
-
-            # -- remove existing inds --
-            remain = rinds_ordered(state.inds[:,p,s],order,cnum+1,snum,device)
-
-            # -- set the remaining vectors --
-            aug_order = repeat(state.order,'b n -> b n d',d=dim)
-            state.vecs[:,p,s,cnum+1:,:] = th.gather(data,1,aug_order)[:,:rnum+1,:]
-
-            # -- find remaining indices for search --
-            # order = state.order if state.use_full else order
-            # remain = remaining_ordered_inds(state,order,cnum)
-            # rnum = remain.shape[-1]
-            # [info]: remain.shape = (batch,nparticles,num-cnum)
-
-            # -- select remaining indices for search --
-            remain = select_prop_inds(remain,sW,cnum)
-            aug_remain = repeat(remain,'b s n -> b s n d',d=D)
-            # [info]: remain.shape = (batch,nparticles,nsearch)
-
-            # -- copy current state --
-            pstate.vals[:,p,:] = state.vals[:,p,None]
-            pstate.vecs[:,p,:,:cnum,:] = state.vecs[:,p,None,:cnum,:]
-            pstate.inds[:,p,:,:cnum] = state.inds[:,p,None,:cnum]
-
-            # -- "append" next state @ cnum --
-            pstate.vecs[:,p,:,cnum,:] = th.gather(data,1,aug_remain[:,p])
-            pstate.inds[:,p,:,cnum] = remain[:,p,:]#th.gather(,1,inds[:,p])
-
-    # -- update state ordering --
-    # update_state_order(pstate,data,sigma,cnum+1)
-    # if use_full:
-    #     print("data.shape: ",data.shape)
-    #     update_state_order(pstate,data,sigma,cnum)
-    #     add_remain_to_vecs(pstate,data,cnum)
-
-    return rnum
+            pstate.vecs[:,p,s,cnum+1:,:] = th.gather(data,1,aug_remaining[:,:fnum])
 
 

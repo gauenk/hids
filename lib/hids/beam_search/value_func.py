@@ -13,7 +13,7 @@ from hids.utils import optional
 from hids.sobel import apply_sobel_to_patches
 
 def compute_state_value(pstate,sigma,cnum,sv_fxn,sv_params):
-    sv_fxn(pstate.vals,pstate.vecs,cnum,sv_params)
+    sv_fxn(pstate.vals,pstate.vecs,cnum+1,sv_params)
 
 def get_state_value_function(method):
     if method == "svar":
@@ -26,9 +26,11 @@ def get_state_value_function(method):
 def sample_var(vals,data,cnum,params):
     sigma = optional(params,'sigma',0.)
     # mindex = min(cnum,params.max_mindex)
-    mean = data[:,:,:,:cnum].mean(-2,keepdim=True)
+    mindex = min(cnum,5)
+    mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
     vals[...] = ((data[:,:,:,:cnum] - mean)**2).mean((-2,-1)).pow(0.5)
-    vals[...] = th.abs(vals - sigma) + mean.abs().mean((-2,-1))
+    mean = data[:,:,:,:cnum].mean(-2,keepdim=True)
+    vals[...] = th.abs(vals - sigma)# + mean.abs().mean((-2,-1))
     return vals
 
 def sample_var_blur(vals,data,cnum,params):
