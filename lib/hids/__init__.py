@@ -1,4 +1,5 @@
 
+import torch as th
 from .l2_search import l2_search,l2_subset
 from .coreset_growth import exec_coreset_growth,exec_beam_search
 from .rand_hypo import rand_hypo
@@ -8,7 +9,9 @@ from .utils import gather_data,compare_inds
 
 def subset_search(data,sigma,snum,method,**kwargs):
     if method == "l2":
-        return l2_subset(data,sigma,snum)
+        output = l2_subset(data,sigma,snum)
+        th.cuda.empty_cache()
+        return output
     elif method == "coreset":
         return exec_coreset_growth(data,sigma,snum,**kwargs)
     elif method == "rand-hypo":
@@ -16,6 +19,8 @@ def subset_search(data,sigma,snum,method,**kwargs):
     elif method == "grad-hypo":
         return grad_hypo(data,sigma,snum,**kwargs)
     elif method == "beam":
-        return exec_beam_search(data,sigma,snum,**kwargs)
+        output = exec_beam_search(data,sigma,snum,**kwargs)
+        th.cuda.empty_cache()
+        return output
     else:
         raise ValueError(f"Uknown method [{method}]")

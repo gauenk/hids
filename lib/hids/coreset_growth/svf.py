@@ -20,14 +20,15 @@ def get_state_value_function(method):
     else:
         raise ValueError(f"Update reference [{method}]")
 
-def sample_var(vals,data,params):
+def sample_var(vals,data,cnum,params):
     sigma = optional(params,'sigma',0.)
-    mean = data.mean(-2,keepdim=True)
-    vals[...] = ((data - mean)**2).mean((-2,-1)).pow(0.5)
+    mindex = min(cnum,params.max_mindex)
+    mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
+    vals[...] = ((data[:,:,:,:cnum] - mean)**2).mean((-2,-1)).pow(0.5)
     vals[...] = th.abs(vals - sigma) + mean.abs().mean((-2,-1))
     return vals
 
-def sample_var_blur(vals,data,params):
+def sample_var_blur(vals,data,cnum,params):
 
     # -- sample variance --
     sample_var(vals,data,params)

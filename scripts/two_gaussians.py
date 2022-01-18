@@ -1,9 +1,14 @@
 
 # -- python --
+import tqdm
+from itertools import chain
+
+# -- data management --
+import pandas as pd
+
+# -- linalg --
 import numpy as np
 import torch as th
-import pandas as pd
-from itertools import chain
 from einops import rearrange,repeat
 
 # -- project --
@@ -13,10 +18,11 @@ from hids import testing
 def two_gaussians():
 
     # -- create experiment fields --
+    device = 'cuda:0'
     fields = {"mean":[0],"mean_cat":["lb-ub"],
               #"mbounds":[(0.01,5.),(0.01,.1),(0.01,.5),(0.01,1.)],
-              "mbounds":[(0.01,.5)],
-              "means_eq":[5,10],"cov_cat":["diag"],"hypoType":["hot"],
+              "mbounds":[(0.01,.1),(0.01,.5),(0.01,1.)],
+              "means_eq":[10],"cov_cat":["diag"],"hypoType":["hot"],
               "sigma":[0.2],"bsize":[128],"num":[500],"dim":[98*3],"snum":[100]}
     exps = testing.get_exp_mesh(fields)
     ds_fields = ["mean_cat","mean","mbounds","cov_cat","sigma",
@@ -24,7 +30,7 @@ def two_gaussians():
 
     # -- init results --
     results = []
-    for exp in exps:
+    for exp in tqdm.tqdm(exps):
 
         # -- unpack --
         ds_args = [exp[field] for field in ds_fields]
@@ -36,9 +42,23 @@ def two_gaussians():
 
         # -- get data --
         noisy,clean = testing.load_gaussian_data(*ds_args)
+        noisy,clean = noisy.to(device),clean.to(device)
 
         # -- gt --
         gt_vals,gt_inds = hids.subset_search(clean,0.,snum,"l2")
+
+        # -- check std --
+        check_std = True
+        if check_std:
+            print("noisy.shape: ",noisy.shape)
+            print("gt_inds.shape: ",gt_inds.shape)
+            B,N,D = noisy.shape
+            aug_inds = repeat(gt_inds,'b n -> b n d',d=D)[:,:means_eq]
+            data = th.gather(noisy,1,aug_inds)
+            mean = data.mean(-2,keepdim=True)
+            vals = (((data - mean)**2).mean((-2,-1)) * (N/(N-1.))).pow(0.5)
+            mstd = vals.mean().item()
+            print(mstd,sigma)
 
         # -- l2 --
         l2_vals,l2_inds = hids.subset_search(noisy,sigma,snum,"l2")
@@ -56,13 +76,18 @@ def two_gaussians():
         # gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"grad-hypo",
         #                                      hypoType=hypoType)
         gh_vals,gh_inds = hids.subset_search(noisy,sigma,snum,"beam",
-                                             num_search=30)
+                                             num_search=100)
+
+        # -- too many iters! --
+        tm_vals,tm_inds = hids.subset_search(noisy,sigma,snum,"beam",
+                                             num_search=2)
 
         # -- compare --
         l2_cmp = hids.compare_inds(gt_inds,l2_inds)
         cg_cmp = hids.compare_inds(gt_inds,cg_inds)
         rh_cmp = hids.compare_inds(gt_inds,rh_inds)
         gh_cmp = hids.compare_inds(gt_inds,gh_inds)
+        tm_cmp = hids.compare_inds(gt_inds,tm_inds)
         # print("l2: ",l2_cmp)
         # print("rh: ",rh_cmp)
         # print("cg: ",cg_cmp)
@@ -74,14 +99,16 @@ def two_gaussians():
 
         # -- abbr. results --
         inds = {}
-        cmps = {'l2_cmp':l2_cmp,'cg_cmp':cg_cmp,'rh_cmp':rh_cmp,'gh_cmp':gh_cmp}
+        cmps = {'l2_cmp':l2_cmp,'cg_cmp':cg_cmp,'rh_cmp':rh_cmp,
+                'gh_cmp':gh_cmp,'tm_cmp':tm_cmp}
         result = dict(chain.from_iterable(d.items() for d in (exp,inds,cmps)))
         results.append(result)
         # print(results)
 
     # -- format and print --
     results = pd.DataFrame(results)
-    print(results[['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp','mbounds','means_eq']])
+    pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp','tm_cmp','mbounds','means_eq']
+    print(results[pkeys])
 
     return results
 
