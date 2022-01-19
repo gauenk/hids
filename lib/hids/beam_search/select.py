@@ -64,6 +64,7 @@ def create_wrandom_inds(bsize,np,sW,device,rnum):
     return inds
 
 def create_random_inds(bsize,np,sW,device,rnum):
+
     # -- alloc --
     inds = th.zeros(bsize,np,sW,dtype=th.long,device=device)
 

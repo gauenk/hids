@@ -93,12 +93,13 @@ def terminate_early(state,data,sigma,snum,cnum,sv_fxn,sv_params):
 
         # -- reference info --
         ref_num = get_ref_num(state,cnum)
-        ref = th.mean(state.vecs[:,p,:cnum])
+        ref = th.mean(state.vecs[:,p,:cnum],1,keepdim=True)
 
         # -- compute order --
         ref_sigma = sigma / math.sqrt(ref_num)
         s_sigma = sigma**2 + ref_sigma**2
         compute_ordering(state,ref,data,s_sigma)
+        # if p == 0: print(state.order[0,:])
 
         # -- order inds --
         rinds_ordered(state.inds[:,p,:cnum],state.order,

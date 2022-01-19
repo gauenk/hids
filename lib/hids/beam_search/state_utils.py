@@ -20,12 +20,13 @@ from hids.l2_search import l2_search
 def compute_ordering(state,ref,data,s_sigma):
     # -- compute ordering [using alloced mem] --
     state.delta[...] = ((data - ref)**2).mean(2)
-    state.delta[...] = th.abs(state.delta - s_sigma)
+    state.delta[...] = th.abs(state.delta - s_sigma**2)
+    # state.delta[th.nonzero(state.delta<0.)] = 0.
     state.order[...] = th.argsort(state.delta,1)
 
 def get_ref_num(state,cnum):
     if state.ref_type == "cnum":
-        return cnum
+        return min(4,cnum)
     else:
         raise KeyError(f"Reference index not assigned [{cnum}]")
 

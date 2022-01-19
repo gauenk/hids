@@ -106,6 +106,17 @@ def denoise_patches(patches_noisy,sigma):
     bayes_estimate_batch(patches_noisy,patches_basic,patches_clean,sigma2,
                          sigmab2,rank,False,thresh,step==1,flat_patch,cs,cs_ptr)
 
+def denoise_subset(noisy,sigma):
+
+    # -- expand patches --
+    patches = expand_patches(noisy)
+
+    # -- exec denoising --
+    patches_p = patches.clone()
+    denoise_patches(patches,sigma)
+    deno = patches
+
+    return deno
 
 def save_patches(name,patches,psnrs,nB=3,nN=10,t=2,c=3):
 

@@ -48,7 +48,7 @@ def fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum):
     # exit(0)
 
     # -- fill remaining vectors using newly computed ordering --
-    # fill_vecs_by_order(pstate,data,sigma,cnum)
+    fill_vecs_by_order(pstate,data,sigma,cnum)
 
 def fill_vecs_by_order(pstate,data,sigma,cnum):
 
@@ -60,7 +60,7 @@ def fill_vecs_by_order(pstate,data,sigma,cnum):
 
             # -- reference info --
             ref_num = get_ref_num(pstate,cnum)
-            ref = th.mean(pstate.vecs[:,p,s,:cnum])
+            ref = th.mean(pstate.vecs[:,p,s,:cnum],1,keepdim=True)
 
             # -- compute order --
             ref_sigma = sigma / math.sqrt(ref_num)
@@ -70,8 +70,8 @@ def fill_vecs_by_order(pstate,data,sigma,cnum):
             # -- select remaining inds in order --
             rinds_ordered(pstate.inds[:,p,s,:cnum],pstate.order,
                           cnum,pstate.snum,pstate.remaining)
-            if p == 0:
-                print(p,s,pstate.remaining[0])
+            # if p == 0:
+            #     print(p,s,pstate.remaining[0])
 
             # -- append remaining inds in ordered --
             aug_remaining = repeat(pstate.remaining,'b n -> b n d',d=dim)

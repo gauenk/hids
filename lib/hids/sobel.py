@@ -22,15 +22,15 @@ def apply_sobel_filter(image,thresh=True):
     weights = repeat(weights,'b 1 h w -> b c h w',c=C)
     edges = F.conv2d(image,weights,padding=1,stride=1)
     edges = ( edges[:,0]**2 + edges[:,1]**2 ) ** (0.5)
-    if thresh is True:
-        edges = rearrange(edges,'b ph pw -> b (ph pw)')
-        edges = th.quantile(edges,0.9,dim=1,keepdim=True)
-        edges = rearrange(edges,'b 1 -> b 1 1')
-        # thresh = edges
-        # zargs = th.nonzero(edges < thresh)
-        # edges[zargs] = 0.
-        # args = th.nonzero(edges > thresh)
-        # edges[args] = 1.
+    # if thresh is True:
+    #     edges = rearrange(edges,'b ph pw -> b (ph pw)')
+    #     edges = th.quantile(edges,0.9,dim=1,keepdim=True)
+    #     edges = rearrange(edges,'b 1 -> b 1 1')
+    #     # thresh = edges
+    #     # zargs = th.nonzero(edges < thresh)
+    #     # edges[zargs] = 0.
+    #     # args = th.nonzero(edges > thresh)
+    #     # edges[args] = 1.
     return edges
 
 def apply_sobel_to_patches(patches,pshape):

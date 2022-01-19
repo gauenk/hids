@@ -63,12 +63,18 @@ def get_candidate_samples(state,data,sigma,cnum):
 
         # -- reference info --
         ref_num = get_ref_num(state,cnum)
-        ref = th.mean(state.vecs[:,p,:cnum])
+        ref = th.mean(state.vecs[:,p,:ref_num],1,keepdim=True)
 
         # -- compute order --
         ref_sigma = sigma / math.sqrt(ref_num)
         s_sigma = sigma**2 + ref_sigma**2
         compute_ordering(state,ref,data,s_sigma)
+        # if p == 0:
+        #     print("c")
+        #     print(state.order[0,:])
+        #     # print(state.delta[0,:])
+        #     print(state.delta[0,387])
+        #     print(state.delta[0,0])
 
         # -- order inds --
         rinds_ordered(state.inds[:,p,:cnum],state.order,

@@ -26,7 +26,7 @@ from .propose import propose_state
 from .update import update_state,terminate_early,select_final_state
 from .init_state import init_state_pair
 
-def beam_search(data,sigma,snum,bwidth=10,swidth=10,svf_method="svar",
+def beam_search(data,sigma,snum,bwidth=5,swidth=5,svf_method="svar",
                 num_search=10,**kwargs):
 
     # -- shapes --
@@ -39,8 +39,9 @@ def beam_search(data,sigma,snum,bwidth=10,swidth=10,svf_method="svar",
     sv_params = edict()
     sv_params.sigma = sigma
     sv_params.pshape = optional(kwargs,'pshape',(2,3,7,7))
-    sv_params.edge_weight = optional(kwargs,'edge_weight',0.1)
-    sv_params.max_mindex = optional(kwargs,'max_mindex',10)
+    sv_params.edge_weight = optional(kwargs,'edge_weight',0.01)
+    sv_params.max_mindex = optional(kwargs,'max_mindex',2)
+    # print("num search: ",num_search)
 
     # -- create and init tensors --
     state,pstate = init_state_pair(data,sigma,bsize,num,snum,dim,bwidth,swidth,device)
@@ -68,6 +69,8 @@ def beam_search(data,sigma,snum,bwidth=10,swidth=10,svf_method="svar",
     # -- pick final state using record --
     vals,inds,vecs = select_final_state(state)
     th.cuda.empty_cache()
+    # print("inds[0]: ",th.sort(inds[0]).values)
+    # print("vals[0]: ",vals[0])
 
     return vals,inds
 
