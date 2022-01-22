@@ -63,7 +63,8 @@ def beam_search(data,sigma,snum,bwidth=5,swidth=5,svf_method="svar",
         # -- terminate early --
         if verbose: print("[cnum/num_search]: %d/%d" % (cnum,num_search))
         if cnum >= num_search:
-            terminate_early(state,data,sigma,snum,cnum,sv_fxn,sv_params)
+            print("term.")
+            terminate_early(state,data,sigma,snum,cnum-1,sv_fxn,sv_params)
             break
 
     # -- pick final state using record --

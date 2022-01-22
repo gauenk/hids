@@ -53,6 +53,15 @@ def update_state(state,pstate,data,sigma,cnum,use_full=True):
     state.vecs[...] = th.gather(vecs,1,aug2_inds)
     # state.order[...] = th.gather(order,1,aug3_inds)
 
+    # -- order inds in decreasing value --
+    # sinds = th.argsort(state.inds[:,:,:cnum+1],2)
+    # state.inds[...,:cnum+1] = th.gather(state.inds[:,:,:cnum+1],2,sinds)
+    # print("state.inds.shape: ",state.inds.shape)
+    # print(state.inds[0,0,:cnum+1])
+    # print(state.inds[0,0,:cnum+2])
+    # print(state.inds[0,1,:cnum+1])
+    # print(state.inds[0,1,:cnum+2])
+
     # -- update mask from inds --
     state.imask[...] = 0
     state.imask[...].scatter_(2,state.inds[:,:,:cnum+1],1)
@@ -86,14 +95,14 @@ def terminate_early(state,data,sigma,snum,cnum,sv_fxn,sv_params):
     bsize,num,dim = data.shape
 
     # -- init vec --
-    fnum = snum - cnum
+    fnum = snum - cnum - 1
 
     # -- update state --
     for p in range(nparticles):
 
         # -- reference info --
         ref_num = get_ref_num(state,cnum)
-        ref = th.mean(state.vecs[:,p,:cnum],1,keepdim=True)
+        ref = th.mean(state.vecs[:,p,:ref_num],1,keepdim=True)
 
         # -- compute order --
         ref_sigma = sigma / math.sqrt(ref_num)
@@ -102,15 +111,15 @@ def terminate_early(state,data,sigma,snum,cnum,sv_fxn,sv_params):
         # if p == 0: print(state.order[0,:])
 
         # -- order inds --
-        rinds_ordered(state.inds[:,p,:cnum],state.order,
-                      cnum,snum,state.remaining)
+        rinds_ordered(state.inds[:,p,:cnum+1],state.order,
+                      cnum+1,snum,state.remaining)
 
         # -- augment remaining inds --
         aug_remain = repeat(state.remaining,'b n -> b n d',d=dim)
 
         # -- append to current state --
-        state.inds[:,p,cnum:] = state.remaining[:,:fnum]
-        state.vecs[:,p,cnum:,:] = th.gather(data,1,aug_remain[:,:fnum])
+        state.inds[:,p,cnum+1:] = state.remaining[:,:fnum]
+        state.vecs[:,p,cnum+1:,:] = th.gather(data,1,aug_remain[:,:fnum])
 
     # -- update values --
     sv_fxn(state.vals[:,:,None],state.vecs[:,:,None],snum,sv_params)

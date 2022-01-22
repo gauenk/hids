@@ -31,7 +31,7 @@ def l2_search(data,ref,sigma,sigma_ref=None,force=False):
 
     # -- compute l2 --
     vals = (data - ref)**2
-    vals = th.abs(vals - s_sigma2)
+    vals = vals# - s_sigma2)
     vals = th.mean(vals,2)
     inds = th.argsort(vals,1)
     if force: force_zero_at_zero(inds)

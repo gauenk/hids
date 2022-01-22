@@ -5,13 +5,16 @@ import numpy as np
 from einops import rearrange,repeat
 
 
-def compare_inds(gt,prop):
+def compare_inds(gt,prop,mbatch=True):
     delta = th.abs(gt[:,None,:] - prop[:,:,None])
     delta = th.any(delta < 1e-8,2)
     delta = delta.type(th.float)
     delta = delta.mean(1)
-    delta = delta.mean(0)
-    return delta.item()
+    if mbatch:
+        delta = delta.mean(0)
+        return delta.item()
+    else:
+        return delta
 
 def optional(pydict,field,default):
     if pydict is None: return default

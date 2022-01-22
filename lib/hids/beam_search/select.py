@@ -23,8 +23,9 @@ def select_samples_to_search(remaining_inds,nsearch,cnum):
     if cnum == 1:
         return strided_inds(remaining_inds,nsearch)
     else:
-        # return rinds[:,:,:nsearch]
-        return strided_inds(remaining_inds,nsearch)
+        return remaining_inds[:,:,:nsearch]
+        # print(strided_inds(remaining_inds,nsearch)[0,:,0])
+        # return strided_inds(remaining_inds,nsearch)
         # return select_random_inds(remaining_inds,nsearch)
 
 def select_random_inds(rinds,sW):

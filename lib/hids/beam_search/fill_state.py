@@ -40,9 +40,8 @@ def fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum):
     pstate.inds[...,cnum] = prop_samples[...]
 
     # -- "append" next vectors @ cnum --
-    # print("pre: ",pstate.vecs[0,0,:,cnum-1:cnum+1,0])
     for p in range(pstate.nparticles):
-        aug_inds = repeat(prop_samples[:,p],'b n -> b n d',d=D)
+        aug_inds = repeat(prop_samples[:,p],'b s -> b s d',d=D)
         pstate.vecs[:,p,:,cnum,:] = th.gather(data,1,aug_inds)
     # print("post: ",pstate.vecs[0,0,:,cnum-1:cnum+1,0])
     # exit(0)
@@ -60,7 +59,7 @@ def fill_vecs_by_order(pstate,data,sigma,cnum):
 
             # -- reference info --
             ref_num = get_ref_num(pstate,cnum)
-            ref = th.mean(pstate.vecs[:,p,s,:cnum],1,keepdim=True)
+            ref = th.mean(pstate.vecs[:,p,s,:ref_num],1,keepdim=True)
 
             # -- compute order --
             ref_sigma = sigma / math.sqrt(ref_num)
@@ -68,10 +67,8 @@ def fill_vecs_by_order(pstate,data,sigma,cnum):
             compute_ordering(pstate,ref,data,s_sigma)
 
             # -- select remaining inds in order --
-            rinds_ordered(pstate.inds[:,p,s,:cnum],pstate.order,
-                          cnum,pstate.snum,pstate.remaining)
-            # if p == 0:
-            #     print(p,s,pstate.remaining[0])
+            rinds_ordered(pstate.inds[:,p,s,:cnum+1],pstate.order,
+                          cnum+1,pstate.snum,pstate.remaining)
 
             # -- append remaining inds in ordered --
             aug_remaining = repeat(pstate.remaining,'b n -> b n d',d=dim)

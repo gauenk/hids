@@ -25,3 +25,8 @@ def subset_search(data,sigma,snum,method,**kwargs):
         return output
     else:
         raise ValueError(f"Uknown method [{method}]")
+
+def psnr_at_inds(noisy,clean,inds):
+    
+
+    return 0.

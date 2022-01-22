@@ -41,12 +41,12 @@ def propose_state(state,pstate,data,sigma,cnum):
     # -- fill proposal state with according to new samples --
     fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum)
 
-# -----------------------------
+# -------------------------------------------------------
 #
 #  "Candidate Samples":
 #  e.g. the ones not already included in the state
 #
-# -----------------------------
+# ------------------------------------------------------
 
 def get_candidate_samples(state,data,sigma,cnum):
 

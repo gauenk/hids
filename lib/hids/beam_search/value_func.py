@@ -52,12 +52,13 @@ def sample_var(vals,data,cnum,params):
     # vals[...] = mean_error + std_error
 
     # print("t_sigma: ",t_sigma)
-    print("mindex,cnum: ",mindex,cnum)
 
     # -- loss v 1 --
-    mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
-    data_zm = data[:,:,:,:cnum] - mean
-    tmp = ((data_zm)**2).mean(-1).pow(0.5)
+    # mean = data[:,:,:,:].mean(-2,keepdim=True)
+    # data_zm = data[:,:,:,:] - mean
+    # tmp = ((data_zm)**2).mean(-1).pow(0.5).mean(-1)
+    # vals[...] = tmp
+
     # vals[...] = (tmp - t_sigma).mean(-1)
     # vals[...] -= 1*(data_zm.std(-1).mean(-1) - t_sigma)
 
@@ -74,35 +75,62 @@ def sample_var(vals,data,cnum,params):
 
 
     # -- [var term] --
-    mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
     # mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
-    data_zm = data[:,:,:,:cnum] - mean
-    tmp = ((data_zm)**2).mean(-1).pow(0.5)
+    # mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
+    # data_zm = data[:,:,:,:cnum] - mean
+    # tmp = ((data_zm)**2).mean(-1).pow(0.5)
     # vals[...] = (tmp - t_sigma).mean(-1)
 
     # -- [mean term] --
     # if mindex == cnum: mindex = 1
-    if cnum >= 100:
+    if cnum >= 100 and False:
         vals[...] = ((data[...,:2,:].mean(-2,keepdim=True) - data[...,:,:])**2).mean((-2,-1))
     elif False:
         mean = data[...,:,:].mean(-2,keepdim=True)
         data_zm = data[:,:,:,:] - mean
         vals[...] = keep_meaned_data_different(data_zm,cnum,-1)#mindex)
     else:
-        print("data.shape: ",data.shape)
+        # print("data.shape: ",data.shape)
         b,w,s = data.shape[:3]
-        data = data[...,:,:]
-        sub = rearrange(data,'b bw s n p -> (b bw s) n p')
-        print("sub.shape: ",sub.shape)
-        deno = denoise_subset(sub,sigma)
-        print("deno.shape: ",deno.shape)
-        deno = rearrange(deno,'(b bw s) n t c h w -> b bw s n (t c h w)',b=b,bw=w)
-        print("deno.shape: ",deno.shape)
-        res = deno - data
-        # print("res.shape: ",res.shape)
-        # print("deno.shape: ",deno.shape)
-        vals[...] = (res**2).mean((-2,-1)) + (res.std((-2,-1)) - sigma)**2
-        vals[...] += 10*th.mean( ( deno[...,[0],:] - deno )**2 , (-2,-1))
+        # data = data[...,:,:]
+        # deno = data
+        deno = data
+
+        # sub = rearrange(data,'b bw s n p -> (b bw s) n p')
+        # deno = denoise_subset(sub,sigma)
+        # deno = rearrange(deno,'(b bw s) n t c h w -> b bw s n (t c h w)',b=b,bw=w)
+        # print("-"*30)
+        # print(deno[1,:,:,0,0])
+        # print(deno[1,:,:,-1,0])
+        # print(deno[1,:,:,0,1])
+        # print(deno[1,:,:,-1,1])
+
+        # -- some deno consistency --
+        vals[...] = 0.
+        mnum = cnum
+        num,dim = data.shape[-2:]
+        Z = num * dim
+        for i in range(mnum):
+            res = deno[...,[i],:] - data[...,:,:]
+            # res = deno[...,[i],:] - deno[...,:,:]
+            # vals[...] += th.abs(((res/sigma)**2).sum((-2,-1)) - Z)
+            vals[...] += ((res)**2).mean((-2,-1))
+        vals[...] /= mnum
+
+        # -- another deno consistency --
+        # dmean = deno[...,:cnum,:].mean(-2,keepdim=True)
+
+        # vals[...] = ((deno[...,:cnum,:] - data[...,:cnum,:])**2).mean((-2,-1))
+
+        # vals[...] = ((res.std((-2)) - sigma)**2).mean(-1)
+        # vals[...] += ((res.std((-1)) - sigma)**2).mean(-1)
+        # vals[...] = ((data[...,[0],:]- data.mean(-2,keepdim=True))**2).mean((-2,-1))
+        # vals[...] = ((data[...,[0],:]- data)**2).mean((-2,-1))
+        # vals[...] += (res**2).mean((-2,-1))# + (res.std((-2,-1)) - sigma)**2
+        # print(vals[0])
+        # print(vals[1])
+        # print(deno[0,:,0,[0],0].ravel())
+        # vals[...] = th.mean( ( deno[...,[0],:] - deno )**2 , (-2,-1))*10
         # denoise_patches(data,sigma)
 
     # vals[...] = th.abs(vals - t_sigma).mean(-1)

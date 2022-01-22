@@ -1,5 +1,8 @@
 
 # -- python --
+import math
+
+# -- linalg --
 import torch as th
 import numpy as np
 from einops import rearrange,repeat
@@ -12,9 +15,8 @@ from torchvision.transforms import Pad as tv_pad
 # -- project --
 from hids.utils import clone
 from hids.color import yuv2rgb,rgb2yuv
+from hids.deno import denoise_patches,denoise_subset
 
-# -- vnlb --
-from vnlb.gpu.bayes_est import bayes_estimate_batch
 
 #
 # -- patch coloring --
@@ -92,31 +94,6 @@ def expand_patches(patches,c=3,pt=2):
         patches = rearrange(patches,shape_str,c=c,pt=pt,ph=ps)
     return patches
 
-def denoise_patches(patches_noisy,sigma):
-
-    group_chnls,cs,cs_ptr = 1,-1,-1
-    sigma2 = sigma**2
-    sigmab2 = sigma**2
-    rank = 39
-    thresh = 2.7
-    step = 0
-    flat_patch = th.zeros(patches_noisy.shape[0],device=patches_noisy.device)
-    patches_basic = th.zeros_like(patches_noisy)
-    patches_clean = None#th.zeros_like(patches_noisy)
-    bayes_estimate_batch(patches_noisy,patches_basic,patches_clean,sigma2,
-                         sigmab2,rank,False,thresh,step==1,flat_patch,cs,cs_ptr)
-
-def denoise_subset(noisy,sigma):
-
-    # -- expand patches --
-    patches = expand_patches(noisy)
-
-    # -- exec denoising --
-    patches_p = patches.clone()
-    denoise_patches(patches,sigma)
-    deno = patches
-
-    return deno
 
 def save_patches(name,patches,psnrs,nB=3,nN=10,t=2,c=3):
 
