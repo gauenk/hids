@@ -15,7 +15,7 @@ from torchvision.transforms import Pad as tv_pad
 # -- project --
 from hids.utils import clone
 from hids.color import yuv2rgb,rgb2yuv
-from hids.deno import denoise_patches,denoise_subset
+# from hids.deno import denoise_patches,denoise_subset
 
 
 #
@@ -133,3 +133,4 @@ def remove_pt_dim(patches,t=2,c=3):
     patches = patches[:,:,0]
     patches = rearrange(patches,'b n c h w -> b n (c h w)')
     return patches
+

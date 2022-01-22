@@ -6,7 +6,8 @@ from einops import rearrange,repeat
 
 # -- project --
 from hids.utils import gather_data
-from hids.patch_utils import expand_patches,denoise_patches
+from hids.patch_utils import expand_patches
+from hids.deno import denoise_patches
 
 def compute_dist_l2(data,ref):
     dist = (data - ref)**2

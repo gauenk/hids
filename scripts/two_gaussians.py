@@ -41,7 +41,7 @@ def save_patches(subset,name,shape):
 def two_gaussians():
 
     # -- create experiment fields --
-    device = 'cuda:0'
+    device = 'cuda:1'
     fields = {"mean":[0],"mean_cat":["lb-ub"],'seed':[123],
               #"mbounds":[(0.01,5.),(0.01,.1),(0.01,.5),(0.01,1.)],
               # "mbounds":[(0.01,.1),(0.01,.5),(0.01,1.)],

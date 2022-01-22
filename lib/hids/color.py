@@ -14,7 +14,6 @@ def yuv2rgb(images):
 
     # -- shape --
     b,c,h,w = images.shape
-    print("images.shape: ",images.shape)
 
     # -- weights --
     w = [1./np.sqrt(3),1./np.sqrt(2),np.sqrt(2.)/np.sqrt(3)]
@@ -43,7 +42,7 @@ def rgb2yuv(images):
     b = clone(images[:,2])
 
     # -- rgb -> yuv --
-    images[:,0] = w[0] * (r + g + b)
-    images[:,1] = w[1] * (r - b)
-    images[:,2] = w[2] * (.25 * r - .5 * g + .25 * b)
+    images[:,0] = weights[0] * (r + g + b)
+    images[:,1] = weights[1] * (r - b)
+    images[:,2] = weights[2] * (.25 * r - .5 * g + .25 * b)
 

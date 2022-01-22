@@ -14,7 +14,7 @@ from einops import rearrange,repeat
 # -- local --
 from hids.utils import optional
 from hids.sobel import apply_sobel_to_patches
-from hids.patch_utils import denoise_subset
+from hids.deno import denoise_subset
 
 def compute_state_value(pstate,sigma,cnum,sv_fxn,sv_params):
     sv_fxn(pstate.vals,pstate.vecs,cnum+1,sv_params)
@@ -94,11 +94,11 @@ def sample_var(vals,data,cnum,params):
         b,w,s = data.shape[:3]
         # data = data[...,:,:]
         # deno = data
-        deno = data
+        # deno = data
 
-        # sub = rearrange(data,'b bw s n p -> (b bw s) n p')
-        # deno = denoise_subset(sub,sigma)
-        # deno = rearrange(deno,'(b bw s) n t c h w -> b bw s n (t c h w)',b=b,bw=w)
+        sub = rearrange(data,'b bw s n p -> (b bw s) n p')
+        deno = denoise_subset(sub,sigma,"pdnn")
+        deno = rearrange(deno,'(b bw s) n t c h w -> b bw s n (t c h w)',b=b,bw=w)
         # print("-"*30)
         # print(deno[1,:,:,0,0])
         # print(deno[1,:,:,-1,0])
@@ -106,20 +106,21 @@ def sample_var(vals,data,cnum,params):
         # print(deno[1,:,:,-1,1])
 
         # -- some deno consistency --
-        vals[...] = 0.
-        mnum = cnum
-        num,dim = data.shape[-2:]
-        Z = num * dim
-        for i in range(mnum):
-            res = deno[...,[i],:] - data[...,:,:]
-            # res = deno[...,[i],:] - deno[...,:,:]
-            # vals[...] += th.abs(((res/sigma)**2).sum((-2,-1)) - Z)
-            vals[...] += ((res)**2).mean((-2,-1))
-        vals[...] /= mnum
+        # vals[...] = 0.
+        # mnum = cnum
+        # num,dim = data.shape[-2:]
+        # Z = num * dim
+        # for i in range(mnum):
+        #     res = deno[...,[i],:] - deno[...,:,:]
+        #     # res = deno[...,[i],:] - deno[...,:,:]
+        #     # vals[...] += th.abs(((res/sigma)**2).sum((-2,-1)) - Z)
+        #     vals[...] += ((res)**2).mean((-2,-1))
+        # vals[...] /= mnum
 
         # -- another deno consistency --
+        dmean = deno[...,:,:].mean(-2,keepdim=True)
         # dmean = deno[...,:cnum,:].mean(-2,keepdim=True)
-
+        vals[...] = ((deno[...,:cnum,:] - dmean)**2).mean((-2,-1))
         # vals[...] = ((deno[...,:cnum,:] - data[...,:cnum,:])**2).mean((-2,-1))
 
         # vals[...] = ((res.std((-2)) - sigma)**2).mean(-1)

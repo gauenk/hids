@@ -6,7 +6,8 @@ from .beam_search import exec_beam_search
 from .rand_hypo import rand_hypo
 from .grad_hypo import grad_hypo
 from .utils import gather_data,compare_inds
-
+# from .patching import imgs2patches
+from .imgs2patches import imgs2patches
 
 def subset_search(data,sigma,snum,method,**kwargs):
     if method == "l2":
@@ -27,6 +28,5 @@ def subset_search(data,sigma,snum,method,**kwargs):
         raise ValueError(f"Uknown method [{method}]")
 
 def psnr_at_inds(noisy,clean,inds):
-    
 
     return 0.
