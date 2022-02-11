@@ -2,9 +2,6 @@
 # -- linalg --
 from einops import rearrange,repeat
 
-# -- vnlb --
-from vnlb.gpu.bayes_est import bayes_estimate_batch
-
 # -- patch-based neural network --
 import pdnn
 

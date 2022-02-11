@@ -30,7 +30,7 @@ def beam_search(data,sigma,snum,bwidth=5,swidth=5,svf_method="svar",
                 num_search=10,**kwargs):
 
     # -- shapes --
-    verbose = False
+    verbose = True
     device = data.device
     bsize,num,dim = data.shape
 
@@ -41,7 +41,6 @@ def beam_search(data,sigma,snum,bwidth=5,swidth=5,svf_method="svar",
     sv_params.pshape = optional(kwargs,'pshape',(2,3,7,7))
     sv_params.edge_weight = optional(kwargs,'edge_weight',0.01)
     sv_params.max_mindex = optional(kwargs,'max_mindex',2)
-    # print("num search: ",num_search)
 
     # -- create and init tensors --
     state,pstate = init_state_pair(data,sigma,bsize,num,snum,dim,bwidth,swidth,device)
@@ -55,7 +54,6 @@ def beam_search(data,sigma,snum,bwidth=5,swidth=5,svf_method="svar",
         propose_state(state,pstate,data,sigma,cnum)
         compute_state_value(pstate,sigma,cnum,sv_fxn,sv_params)
         update_state(state,pstate,data,sigma,cnum)
-        # print(state.vals[0])
 
         # -- update num --
         cnum += 1
@@ -63,15 +61,15 @@ def beam_search(data,sigma,snum,bwidth=5,swidth=5,svf_method="svar",
         # -- terminate early --
         if verbose: print("[cnum/num_search]: %d/%d" % (cnum,num_search))
         if cnum >= num_search:
-            print("term.")
             terminate_early(state,data,sigma,snum,cnum-1,sv_fxn,sv_params)
             break
+
 
     # -- pick final state using record --
     vals,inds,vecs = select_final_state(state)
     th.cuda.empty_cache()
-    # print("inds[0]: ",th.sort(inds[0]).values)
-    # print("vals[0]: ",vals[0])
+    # print("inds[4]: ",th.sort(inds[4]).values)
+    # print("vals[4]: ",vals[4])
 
     return vals,inds
 

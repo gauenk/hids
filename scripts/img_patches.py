@@ -27,7 +27,7 @@ from einops import rearrange,repeat
 # -- project --
 import hids
 from hids import testing
-from sim_search import get_patches
+from vpss import get_patches
 
 def save_patches(subset,name,shape):
 
@@ -52,7 +52,7 @@ def img_patches():
 
     # -- create experiment fields --
     device = 'cuda:0'
-    fields = {"noise_level":[30.,50.],"dataset":["davis"],
+    fields = {"sigma":[30.,50.],"dataset":["davis"],
               "ps": [13],"npatches":[10],"nneigh":[15],
               "snum":[100],"num":[500],"seed":[123]
     }
@@ -65,7 +65,7 @@ def img_patches():
         # -- unpack --
         num = exp['num']
         snum = exp['snum']
-        sigma = exp["noise_level"]
+        sigma = exp["sigma"]
         seed = exp['seed']
         ps = exp['ps']
         nneigh = exp['nneigh']
@@ -74,6 +74,7 @@ def img_patches():
         # -- init config --
         exp.batch_size = 4
         exp.frame_size = [128,128]
+        exp.noise_level = exp.sigma
 
         # -- set random seed --
         np.random.seed(seed)
@@ -95,14 +96,12 @@ def img_patches():
 
         # -- sample patches --
         pnoisy,pclean,sample_inds = hids.imgs2patches(noisy,clean,sigma,ps,npatches,num)
-        print("pnoisy.shape: ",pnoisy.shape)
 
         # -- get remaining patches --
         pbasic = get_patches(basic,sample_inds,ps,mode="batch")
         pbasic_7 = get_patches(basic,sample_inds,7,mode="batch")
         pnoisy_7 = get_patches(noisy,sample_inds,7,mode="batch")
         pclean_7 = get_patches(clean,sample_inds,7,mode="batch")
-        print("pnoisy_7.shape: ",pnoisy_7.shape)
 
         # -- correct shape --
         pnoisy = rearrange(pnoisy,'b p n t c h w -> (b p) n (t c h w)')
@@ -119,25 +118,34 @@ def img_patches():
         print("pclean_7.shape: ",pclean_7.shape)
 
         # -- reorder samples according to l2 --
-        reorder_inds = hids.subset_search(pnoisy_7,sigma,num,"l2")[1]
+        reorder_bool = False
+        if reorder_bool:
+            rnum = pclean_7.shape[-2]
+            reorder_inds = hids.subset_search(pclean_7*255.,0.,rnum,"l2")[1]
 
-        D = pnoisy.shape[2]
-        print(reorder_inds.shape)
-        aug_inds = repeat(reorder_inds,'b n -> b n d',d=D)
-        pnoisy = th.gather(pnoisy,1,aug_inds)
-        pbasic = th.gather(pbasic,1,aug_inds)
-        pclean = th.gather(pclean,1,aug_inds)
+            D = pnoisy.shape[2]
+            aug_inds = repeat(reorder_inds,'b n -> b n d',d=D)
+            pnoisy = th.gather(pnoisy,1,aug_inds)
+            pbasic = th.gather(pbasic,1,aug_inds)
+            pclean = th.gather(pclean,1,aug_inds)
 
+            D7 = pnoisy_7.shape[2]
+            aug_inds = repeat(reorder_inds,'b n -> b n d',d=D7)
+            pnoisy_7 = th.gather(pnoisy_7,1,aug_inds)
+            pbasic_7 = th.gather(pbasic_7,1,aug_inds)
+            pclean_7 = th.gather(pclean_7,1,aug_inds)
 
-        D7 = pnoisy_7.shape[2]
-        print(reorder_inds.shape)
-        aug_inds = repeat(reorder_inds,'b n -> b n d',d=D7)
-        pnoisy_7 = th.gather(pnoisy_7,1,aug_inds)
-        pbasic_7 = th.gather(pbasic_7,1,aug_inds)
-        pclean_7 = th.gather(pclean_7,1,aug_inds)
+            print("-="*35)
+            print("pnoisy.shape: ",pnoisy.shape)
+            print("pbasic.shape: ",pbasic.shape)
+            print("pclean.shape: ",pclean.shape)
+            print("pnoisy_7.shape: ",pnoisy_7.shape)
+            print("pbasic_7.shape: ",pbasic_7.shape)
+            print("pclean_7.shape: ",pclean_7.shape)
+            print("-="*35)
 
         # -- gt --
-        gt_vals,gt_inds = hids.subset_search(pclean_7,0.,snum,"l2")
+        gt_vals,gt_inds = hids.subset_search(pclean_7*255.,0.,snum,"l2")
 
         # -- l2 --
         l2_vals,l2_inds = hids.subset_search(pnoisy,sigma,snum,"l2")
@@ -156,11 +164,8 @@ def img_patches():
                                              num_search = 10, max_mindex=3)
 
         # -- ours [v2] --
-        v2_vals,v2_inds = hids.subset_search(pnoisy,sigma,snum,"beam",bwidth=10,
-                                             num_search=20, max_mindex=3)
-
-        # -- ours [v3] --
-        # exec_patch_search(img,sigma,srch_inds,nsearch,7)
+        v2_vals,v2_inds = hids.subset_search(pnoisy,sigma,snum,"beam",bwidth=30,
+                                             num_search=10, max_mindex=3)
 
         # -- compare inds --
         l2_cmp = hids.compare_inds(gt_inds,l2_inds,False)
@@ -170,14 +175,20 @@ def img_patches():
         v1_cmp = hids.compare_inds(gt_inds,v1_inds,False)
         v2_cmp = hids.compare_inds(gt_inds,v2_inds,False)
 
+        print("-="*25)
+        print(gt_inds[4])
+        print(th.sort(l2_inds[4]).values)
+        print(th.sort(l2_inds[4]).values)
+        print("-="*25)
+
         print("-"*30)
         print("-"*30)
-        print(l2_cmp,l2_cmp.mean(),l2_cmp.std())
-        print(l27_cmp,l27_cmp.mean(),l27_cmp.std())
-        print(vb_cmp,vb_cmp.mean(),vb_cmp.std())
-        print(vb7_cmp,vb7_cmp.mean(),vb7_cmp.std())
-        print(v1_cmp,v1_cmp.mean(),v1_cmp.std())
-        print(v2_cmp,v2_cmp.mean(),v2_cmp.std())
+        print(l2_cmp,l2_cmp.mean())
+        print(l27_cmp,l27_cmp.mean())
+        print(vb_cmp,vb_cmp.mean())
+        print(vb7_cmp,vb7_cmp.mean())
+        print(v1_cmp,v1_cmp.mean())
+        print(v2_cmp,v2_cmp.mean())
 
         # -- compare psnr --
         gt_psnr = hids.psnr_at_inds(noisy,clean,gt_inds)
@@ -194,6 +205,7 @@ def img_patches():
         # -- abbr. results --
         inds = {}
         cmps = {'l2_cmp':l2_cmp,'l27_cmp':l27_cmp,'v1_cmp':v1_cmp,'v2_cmp':v2_cmp}
+        cmps = {k:v.mean().item() for k,v in cmps.items()}
         psnr = {'gt_psnr':gt_psnr,'l2_psnr':l2_psnr,'l27_psnr':l27_psnr,
                 'v1_psnr':v1_psnr,'v2_psnr':v2_psnr}
         result = dict(chain.from_iterable(d.items() for d in (exp,inds,cmps,psnr)))

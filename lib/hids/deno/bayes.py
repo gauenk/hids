@@ -1,7 +1,7 @@
 
 
 # -- vnlb --
-from vnlb.gpu.bayes_est import bayes_estimate_batch
+from vnlb.deno import bayes_denoise
 from .utils import expand_patches
 
 
@@ -18,8 +18,8 @@ def bayes_deno(patches,sigma):
     flat_patch = th.zeros(patches.shape[0],device=patches.device)
     patches_basic = th.zeros_like(patches)
     patches_clean = None#th.zeros_like(patches)
-    bayes_estimate_batch(patches,patches_basic,patches_clean,sigma2,
-                         sigmab2,rank,False,thresh,step==1,flat_patch,cs,cs_ptr)
+    bayes_denoise(patches,patches_basic,patches_clean,sigma2,
+                  sigmab2,rank,False,thresh,step==1,flat_patch,cs,cs_ptr)
 
 
 

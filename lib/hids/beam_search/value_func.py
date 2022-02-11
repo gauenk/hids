@@ -75,21 +75,31 @@ def sample_var(vals,data,cnum,params):
 
 
     # -- [var term] --
-    # mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
-    # mean = data[:,:,:,:mindex].mean(-2,keepdim=True)
+    # t_sigma = compute_target_sigma(sigma/255.,mindex)
+    # print("t_sigma: ",t_sigma)
+    t_sigma = sigma#/np.sqrt(mindex)
+    mean = data[:,:,:,:,:].mean(-2,keepdim=True)
+    # mean = data[:,:,:,:mindex,:].mean(-2,keepdim=True)
+    # mean = data[:,:,:,:1]#.mean(-2,keepdim=True)
+    data_zm = data[:,:,:,:] - mean
     # data_zm = data[:,:,:,:cnum] - mean
-    # tmp = ((data_zm)**2).mean(-1).pow(0.5)
-    # vals[...] = (tmp - t_sigma).mean(-1)
+    tmp = ((data_zm)**2).mean(-1).pow(0.5)
+    vals[...] = th.abs((tmp - t_sigma)).mean(-1) + (tmp**2).mean(-1)
+    # vals[...] = ((data_zm)**2).mean((-2,-1))
+    # vals[...] = th.rand_like(vals)**2
 
     # -- [mean term] --
     # if mindex == cnum: mindex = 1
     if cnum >= 100 and False:
         vals[...] = ((data[...,:2,:].mean(-2,keepdim=True) - data[...,:,:])**2).mean((-2,-1))
     elif False:
+        print("data.shape: ",data.shape)
+        print("vals.shape: ",vals.shape)
         mean = data[...,:,:].mean(-2,keepdim=True)
         data_zm = data[:,:,:,:] - mean
-        vals[...] = keep_meaned_data_different(data_zm,cnum,-1)#mindex)
-    else:
+        vals[...] = th.mean((data[...,[0],:] - data)**2,dim=(-2,-1))
+        # vals[...] = keep_meaned_data_different(data_zm,cnum,-1)#mindex)
+    elif False:
         # print("data.shape: ",data.shape)
         b,w,s = data.shape[:3]
         # data = data[...,:,:]

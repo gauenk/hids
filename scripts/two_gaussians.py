@@ -46,7 +46,7 @@ def two_gaussians():
               #"mbounds":[(0.01,5.),(0.01,.1),(0.01,.5),(0.01,1.)],
               # "mbounds":[(0.01,.1),(0.01,.5),(0.01,1.)],
               "mbounds":[(0.01,.1)],
-              "means_eq":[5],"cov_cat":["diag"],"hypoType":["hot"],
+              "means_eq":[10],"cov_cat":["diag"],"hypoType":["hot"],
               "sigma":[30./255.],"bsize":[128],"num":[500],"dim":[98*3],"snum":[100]}
     exps = testing.get_exp_mesh(fields)
     ds_fields = ["mean_cat","mean","mbounds","cov_cat","sigma",
@@ -70,21 +70,25 @@ def two_gaussians():
         th.manual_seed(seed)
 
         # -- get data --
-        noisy = th.load("../vnlb/data/patches_noisy.pt")/255.
-        clean = th.load("../vnlb/data/patches_clean.pt")/255.
-        noisy = noisy[:50]
-        clean = clean[:50]
-        B,N = noisy.shape[:2]
-        noisy = noisy.reshape(B,N,-1)
-        clean = clean.reshape(B,N,-1)
-        B,N,D = noisy.shape
-        # noisy,clean = testing.load_gaussian_data(*ds_args)
+        # noisy = th.load("../vnlb/data/patches_noisy.pt")/255.
+        # clean = th.load("../vnlb/data/patches_clean.pt")/255.
+        # noisy = noisy[:50]
+        # clean = clean[:50]
+        # B,N = noisy.shape[:2]
+        # noisy = noisy.reshape(B,N,-1)
+        # clean = clean.reshape(B,N,-1)
+        # B,N,D = noisy.shape
+
+        # -- get data [v2] --
+        noisy,clean = testing.load_gaussian_data(*ds_args)
         noisy,clean = noisy.to(device),clean.to(device)
+        print("noisy.shape: ",noisy.shape)
+        print("clean.shape: ",clean.shape)
+        B,N,D = noisy.shape
 
         # -- info on clean data --
         delta_m = th.mean((clean[:,[0]] - clean)**2,2).mean(1)
         delta_s = th.mean((clean[:,[0]] - clean)**2,2).std(1)
-        print(delta_m,delta_s)
 
         # -- reorder samples according to l2 --
         reorder_inds = hids.subset_search(noisy,sigma,num,"l2")[1]
@@ -93,14 +97,14 @@ def two_gaussians():
         clean = th.gather(clean,1,reorder_inds)
 
         # -- reorder --
-        save_patches(noisy[-1],"noisy_09.png",(2,3,7,7))
-        save_patches(clean[-1],"clean_09.png",(2,3,7,7))
-        save_patches(noisy[1],"noisy_01.png",(2,3,7,7))
-        save_patches(clean[1],"clean_01.png",(2,3,7,7))
-        save_patches(noisy[0],"noisy_00.png",(2,3,7,7))
-        save_patches(clean[0],"clean_00.png",(2,3,7,7))
+        # save_patches(noisy[-1],"noisy_09.png",(2,3,7,7))
+        # save_patches(clean[-1],"clean_09.png",(2,3,7,7))
+        # save_patches(noisy[1],"noisy_01.png",(2,3,7,7))
+        # save_patches(clean[1],"clean_01.png",(2,3,7,7))
+        # save_patches(noisy[0],"noisy_00.png",(2,3,7,7))
+        # save_patches(clean[0],"clean_00.png",(2,3,7,7))
 
-        # -- gt --
+        # # -- gt --
         gt_vals,gt_inds = hids.subset_search(clean,0.,snum,"l2")
 
         # -- check std --
@@ -175,6 +179,7 @@ def two_gaussians():
         inds = {}
         cmps = {'l2_cmp':l2_cmp,'cg_cmp':cg_cmp,'rh_cmp':rh_cmp,
                 'gh_cmp':gh_cmp,'tm_cmp':tm_cmp}
+        cmps = {k:v.mean().item() for k,v in cmps.items()}
         psnr = {'gt_psnr':gt_psnr,'l2_psnr':l2_psnr,'cg_psnr':cg_psnr,'rh_psnr':rh_psnr,
                  'gh_psnr':gh_psnr,'tm_psnr':tm_psnr}
         result = dict(chain.from_iterable(d.items() for d in (exp,inds,cmps,psnr)))
@@ -185,7 +190,8 @@ def two_gaussians():
     results = pd.DataFrame(results)
     # pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp',
     #          'tm_cmp','mbounds','means_eq','seed']
-    pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp','tm_cmp']
+    pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp']
+    # pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp','tm_cmp']
     print(results[pkeys])
     # pkeys = ['sigma','gt_psnr','l2_psnr','cg_psnr','rh_psnr','gh_psnr','tm_psnr']
     # print(results[pkeys])

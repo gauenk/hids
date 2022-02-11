@@ -27,7 +27,7 @@ def compute_ordering(state,ref,data,s_sigma):
 
 def get_ref_num(state,cnum):
     if state.ref_type == "cnum":
-        return min(2,cnum)
+        return min(10,cnum)
     else:
         raise KeyError(f"Reference index not assigned [{cnum}]")
 
