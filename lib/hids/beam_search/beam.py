@@ -30,7 +30,7 @@ def beam_search(data,sigma,snum,bwidth=5,swidth=5,svf_method="svar",
                 num_search=10,**kwargs):
 
     # -- shapes --
-    verbose = True
+    verbose = False
     device = data.device
     bsize,num,dim = data.shape
 

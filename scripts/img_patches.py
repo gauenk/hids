@@ -101,9 +101,12 @@ def img_patches():
 
         # -- get remaining patches --
         pbasic = get_patches(basic,sample_inds,ps,mode="batch",pt=pt)
-        pbasic_7 = get_patches(basic,sample_inds,7,mode="batch",pt=pt)
-        pnoisy_7 = get_patches(noisy,sample_inds,7,mode="batch",pt=pt)
-        pclean_7 = get_patches(clean,sample_inds,7,mode="batch",pt=pt)
+        pbasic_7 = get_patches(basic,sample_inds,3,mode="batch",pt=pt)
+        pnoisy_7 = get_patches(noisy,sample_inds,3,mode="batch",pt=pt)
+        pclean_7 = get_patches(clean,sample_inds,3,mode="batch",pt=pt)
+        nps = 25
+        pnoisy_nd = get_patches(noisy,sample_inds,nps,mode="batch",pt=pt)
+        pclean_nd = get_patches(clean,sample_inds,nps,mode="batch",pt=pt)
 
         # -- correct shape --
         pnoisy = rearrange(pnoisy,'b p n t c h w -> (b p) n (t c h w)')
@@ -112,6 +115,8 @@ def img_patches():
         pnoisy_7 = rearrange(pnoisy_7,'b p n t c h w -> (b p) n (t c h w)')
         pbasic_7 = rearrange(pbasic_7,'b p n t c h w -> (b p) n (t c h w)')
         pclean_7 = rearrange(pclean_7,'b p n t c h w -> (b p) n (t c h w)')
+        pnoisy_nd = rearrange(pnoisy_nd,'b p n t c h w -> (b p) n (t c h w)')
+        pclean_nd = rearrange(pclean_nd,'b p n t c h w -> (b p) n (t c h w)')
         print("pnoisy.shape: ",pnoisy.shape)
         print("pbasic.shape: ",pbasic.shape)
         print("pclean.shape: ",pclean.shape)
@@ -158,6 +163,10 @@ def img_patches():
         # -- l2 --
         l27_vals,l27_inds = hids.subset_search(pnoisy_7,sigma,snum,"l2")
 
+        # -- needle --
+        nd_vals,nd_inds = hids.subset_search(pnoisy_nd,sigma,snum,"needle",ps=nps)
+        # nd_vals,nd_inds = hids.subset_search(pclean_nd,sigma,snum,"needle",ps=nps)
+
         # -- basic --
         vb_vals,vb_inds = hids.subset_search(pbasic,sigma,snum,"l2")
 
@@ -165,46 +174,52 @@ def img_patches():
         vb7_vals,vb7_inds = hids.subset_search(pbasic_7,sigma,snum,"l2")
 
         # -- ours [v1] --
-        v1_vals,v1_inds = hids.subset_search(pnoisy,sigma,snum,"beam",
-                                             bwidth=10,swidth=10,
-                                             num_search = 10, max_mindex=3,
-                                             svf_method="svar")
+        # v1_vals,v1_inds = hids.subset_search(pnoisy,sigma,snum,"beam",
+        #                                      bwidth=10,swidth=10,
+        #                                      num_search = 10, max_mindex=3,
+        #                                      svf_method="svar")
+        v1_inds = l2_inds.clone()
 
         # -- ours [v2] --
-        v2_vals,v2_inds = hids.subset_search(pnoisy,sigma,snum,"beam",
-                                             bwidth=10,swidth=10,
-                                             num_search=10, max_mindex=3)
+        # v2_vals,v2_inds = hids.subset_search(pnoisy,sigma,snum,"beam",
+        #                                      bwidth=10,swidth=10,
+        #                                      num_search=10, max_mindex=3)
+        v2_inds = l2_inds.clone()
 
         # -- compare inds --
         l2_cmp = hids.compare_inds(gt_inds,l2_inds,False)
         l27_cmp = hids.compare_inds(gt_inds,l27_inds,False)
+        nd_cmp = hids.compare_inds(gt_inds,nd_inds,False)
         vb_cmp = hids.compare_inds(gt_inds,vb_inds,False)
         vb7_cmp = hids.compare_inds(gt_inds,vb7_inds,False)
         v1_cmp = hids.compare_inds(gt_inds,v1_inds,False)
         v2_cmp = hids.compare_inds(gt_inds,v2_inds,False)
 
-        print("-="*25)
-        print(gt_inds[4])
-        print(th.sort(l2_inds[4]).values)
-        print(th.sort(l2_inds[4]).values)
-        print("-="*25)
+        # print("-="*25)
+        # print(gt_inds[4])
+        # print(th.sort(l2_inds[4]).values)
+        # print(th.sort(l2_inds[4]).values)
+        # print("-="*25)
 
         print("-"*30)
         print("-"*30)
         print(l2_cmp,l2_cmp.mean())
         print(l27_cmp,l27_cmp.mean())
+        print(nd_cmp,nd_cmp.mean())
         print(vb_cmp,vb_cmp.mean())
         print(vb7_cmp,vb7_cmp.mean())
         print(v1_cmp,v1_cmp.mean())
         print(v2_cmp,v2_cmp.mean())
 
-        print("-="*20)
-        print(th.stack([l2_cmp,v1_cmp],-1))
-        print("-="*20)
+        # print("-="*20)
+        # print(th.stack([l2_cmp,v1_cmp],-1))
+        # print(th.stack([l2_cmp,nd_cmp],-1))
+        # print("-="*20)
 
         # -- compare psnr --
         gt_psnr = hids.psnr_at_inds(noisy,clean,gt_inds)
         l2_psnr = hids.psnr_at_inds(noisy,clean,l2_inds)
+        nd_psnr = hids.psnr_at_inds(noisy,clean,nd_inds)
         l27_psnr = hids.psnr_at_inds(noisy,clean,l27_inds)
         v1_psnr = hids.psnr_at_inds(noisy,clean,v1_inds)
         v2_psnr = hids.psnr_at_inds(noisy,clean,v2_inds)
@@ -216,10 +231,11 @@ def img_patches():
 
         # -- abbr. results --
         inds = {}
-        cmps = {'l2_cmp':l2_cmp,'l27_cmp':l27_cmp,'v1_cmp':v1_cmp,'v2_cmp':v2_cmp}
+        cmps = {'l2_cmp':l2_cmp,'l27_cmp':l27_cmp,'nd_cmp':nd_cmp,
+                'v1_cmp':v1_cmp,'v2_cmp':v2_cmp}
         cmps = {k:v.mean().item() for k,v in cmps.items()}
         psnr = {'gt_psnr':gt_psnr,'l2_psnr':l2_psnr,'l27_psnr':l27_psnr,
-                'v1_psnr':v1_psnr,'v2_psnr':v2_psnr}
+                'nd_psnr':nd_psnr,'v1_psnr':v1_psnr,'v2_psnr':v2_psnr}
         result = dict(chain.from_iterable(d.items() for d in (exp,inds,cmps,psnr)))
         results.append(result)
         # print(results)
@@ -228,9 +244,9 @@ def img_patches():
     results = pd.DataFrame(results)
     # pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp',
     #          'tm_cmp','mbounds','means_eq','seed']
-    pkeys = ['sigma','l2_cmp','l27_cmp','v1_cmp','v2_cmp']
+    pkeys = ['sigma','l2_cmp','l27_cmp','nd_cmp','v1_cmp','v2_cmp']
     print(results[pkeys])
-    # pkeys = ['sigma','gt_psnr','l2_psnr','cg_psnr','rh_psnr','gh_psnr','tm_psnr']
+    # pkeys = ['sigma','gt_psnr','l2_psnr','nd_psnr','v1_psnr','v2_psnr']
     # print(results[pkeys])
 
     return results

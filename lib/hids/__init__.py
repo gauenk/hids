@@ -16,7 +16,7 @@ def subset_search(data,sigma,snum,method,**kwargs):
         th.cuda.empty_cache()
         return output
     elif method == "needle":
-        output = needle_subset(data,sigma,snum)
+        output = needle_subset(data,sigma,snum,**kwargs)
         th.cuda.empty_cache()
         return output
     elif method == "coreset":

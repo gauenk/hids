@@ -23,12 +23,44 @@ def compute_state_value(pstate,sigma,cnum,sv_fxn,sv_params):
 def get_state_value_function(method):
     if method == "svar":
         return sample_var
+    if method == "svar_needle":
+        return sample_needle
     elif method == "svar_blur":
         return sample_var_blur
     elif method == "hdgnn":
         return exec_hdgnn
     else:
         raise ValueError(f"Update reference [{method}]")
+
+def sample_needle(vals,data,cnum,params):
+
+    # -- mean indexing --
+    # mindex = min(cnum,params.max_mindex)
+    # mindex = min(cnum,5)#params.max_mindex)
+    mindex = min(cnum,params.max_mindex)
+    mindex = cnum
+
+    # -- noise level --
+    sigma = optional(params,'sigma',0.)
+    t_sigma = compute_target_sigma(sigma,mindex)
+
+    # -- [var term] --
+    mindex = data.shape[-2]
+    t_sigma = compute_target_sigma(sigma,mindex)
+
+    # -- reshape --
+    data = rearrange(data,'b p s n (l d) -> b p s n l d',l=4)
+    # print(data.shape)
+    # rearrange(data,'')
+    mean = data.mean(-3,keepdim=True)
+    data_zm = data - mean
+    tmp = ((data_zm)**2).mean(-1).pow(0.5)
+    # print("tmp.shape: ",tmp.shape)
+    # ref = data[...,[0],:]
+    ref = data[...,:2,:,:].mean(-3,keepdim=True)
+    dref =  (data - ref)[...,1:,:]
+    # print(dref.shape)
+    vals[...] = ((tmp[...,0] - t_sigma)**2).mean(-1) + (dref**2).mean((-3,-2,-1))
 
 def sample_var(vals,data,cnum,params):
 
@@ -81,7 +113,7 @@ def sample_var(vals,data,cnum,params):
     # -- [var term] --
     mindex = data.shape[-2]
     t_sigma = compute_target_sigma(sigma,mindex)
-    print("t_sigma: ",t_sigma,sigma,mindex)
+    # print("t_sigma: ",t_sigma,sigma,mindex)
     # t_sigma = sigma#/np.sqrt(mindex)
     mean = data[:,:,:,:,:].mean(-2,keepdim=True)
     # mean = data[:,:,:,:mindex,:].mean(-2,keepdim=True)

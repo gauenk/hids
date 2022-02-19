@@ -15,7 +15,7 @@ from .sobel import apply_sobel_filter
 
 # -- local import --
 # from .l2_search import exec_l2_search
-from vpss import fill_patches,exec_sim_search
+# from vpss import fill_patches,exec_sim_search
 
 def imgs2patches(noisy,clean,sigma,ps,npatches,nneigh,**kwargs):
     """

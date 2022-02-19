@@ -3,7 +3,7 @@
 from einops import rearrange,repeat
 
 # -- patch-based neural network --
-import pdnn
+# import pdnn
 
 # -- package --
 from hids.patch_utils import yuv2rgb_patches,rgb2yuv_patches
@@ -34,7 +34,8 @@ def deno_pdnn(patches,sigma,ps=7):
     rgb_patches = yuv2rgb_patches(patches)
 
     # -- denoise --
-    rgb_deno = pdnn.denoise_patches(rgb_patches,sigma,13)
+    # rgb_deno = pdnn.denoise_patches(rgb_patches,sigma,13)
+    rgb_deno = rgb_patches
 
     # -- crop to actual search ps --
     assert 13 >= ps

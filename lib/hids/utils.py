@@ -18,7 +18,7 @@ def compare_inds(gt,prop,mbatch=True):
     delta = th.abs(gt[:,None,:] - prop[:,:,None])
     delta = th.any(delta < 1e-8,2)
     delta = delta.type(th.float)
-    delta = delta.mean(1)
+    delta = delta.mean(1) # normalized by Number of Guesses
     if mbatch:
         delta = delta.mean(0)
         return delta.item()
