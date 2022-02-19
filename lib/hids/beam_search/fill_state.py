@@ -25,7 +25,7 @@ from .state_utils import *
 from .inds import *
 from .init_state import init_prop_state
 
-def fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum):
+def fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum,params):
 
     # -- shape --
     device = data.device
@@ -47,9 +47,9 @@ def fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum):
     # exit(0)
 
     # -- fill remaining vectors using newly computed ordering --
-    fill_vecs_by_order(pstate,data,sigma,cnum)
+    fill_vecs_by_order(pstate,data,sigma,cnum,params)
 
-def fill_vecs_by_order(pstate,data,sigma,cnum):
+def fill_vecs_by_order(pstate,data,sigma,cnum,params):
 
     # -- fill remaining vecs using ordering --
     bsize,num,dim = data.shape
@@ -58,7 +58,7 @@ def fill_vecs_by_order(pstate,data,sigma,cnum):
         for s in range(pstate.nsearch):
 
             # -- reference info --
-            ref_num = get_ref_num(pstate,cnum)
+            ref_num = get_ref_num(pstate,cnum,params)
             ref = th.mean(pstate.vecs[:,p,s,:ref_num],1,keepdim=True)
 
             # -- compute order --

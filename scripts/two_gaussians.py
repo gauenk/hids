@@ -45,9 +45,10 @@ def two_gaussians():
     fields = {"mean":[0],"mean_cat":["lb-ub"],'seed':[123],
               #"mbounds":[(0.01,5.),(0.01,.1),(0.01,.5),(0.01,1.)],
               # "mbounds":[(0.01,.1),(0.01,.5),(0.01,1.)],
-              "mbounds":[(0.01,.1)],
+              "mbounds":[(0.01,.1),(0.1,0.2)],
               "means_eq":[10],"cov_cat":["diag"],"hypoType":["hot"],
-              "sigma":[30./255.],"bsize":[128],"num":[500],"dim":[98*3],"snum":[100]}
+              "sigma":[30./255.,50./255.],"bsize":[8],"num":[500],"dim":[98*3//2],
+              "snum":[50]}
     exps = testing.get_exp_mesh(fields)
     ds_fields = ["mean_cat","mean","mbounds","cov_cat","sigma",
                  "bsize","num","dim","means_eq"]
@@ -60,7 +61,7 @@ def two_gaussians():
         ds_args = [exp[field] for field in ds_fields]
         hypoType = exp['hypoType']
         num = exp['num']
-        snum = 10#exp['snum']
+        snum = exp['snum']
         sigma = exp["sigma"]
         means_eq = exp['means_eq']
         seed = exp['seed']
@@ -123,12 +124,11 @@ def two_gaussians():
         l2_vals,l2_inds = hids.subset_search(noisy,sigma,snum,"l2")
         print(l2_inds[0])
 
-        # -- coreset growth --
+        # -- gt --
         gt_order = hids.subset_search(clean,0.,num,"l2")[1]
-        # cg_vals,cg_inds = hids.subset_search(noisy,sigma,snum,"beam",
-        #                                      num_search = 2*means_eq,
-        #                                      max_mindex = means_eq)
-        cg_inds = l2_inds.clone()
+
+        # -- coreset growth --
+        cg_vals,cg_inds = hids.subset_search(noisy,sigma,snum,"needle")
 
         # -- random subsetting --
         rh_vals,rh_inds = hids.subset_search(noisy,sigma,snum,"beam",
@@ -190,8 +190,8 @@ def two_gaussians():
     results = pd.DataFrame(results)
     # pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp',
     #          'tm_cmp','mbounds','means_eq','seed']
-    pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp']
-    # pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp','tm_cmp']
+    # pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp']
+    pkeys = ['sigma','l2_cmp','cg_cmp','rh_cmp','gh_cmp','tm_cmp','means_eq','mbounds']
     print(results[pkeys])
     # pkeys = ['sigma','gt_psnr','l2_psnr','cg_psnr','rh_psnr','gh_psnr','tm_psnr']
     # print(results[pkeys])

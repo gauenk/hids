@@ -12,9 +12,10 @@ import numpy as np
 from einops import rearrange,repeat
 
 # -- local --
-from hids.utils import optional
+from hids.utils import optional,compute_target_sigma
 from hids.sobel import apply_sobel_to_patches
 from hids.deno import denoise_subset
+from hids.hdgnn import exec_hdgnn
 
 def compute_state_value(pstate,sigma,cnum,sv_fxn,sv_params):
     sv_fxn(pstate.vals,pstate.vecs,cnum+1,sv_params)
@@ -24,6 +25,8 @@ def get_state_value_function(method):
         return sample_var
     elif method == "svar_blur":
         return sample_var_blur
+    elif method == "hdgnn":
+        return exec_hdgnn
     else:
         raise ValueError(f"Update reference [{method}]")
 
@@ -31,8 +34,9 @@ def sample_var(vals,data,cnum,params):
 
     # -- mean indexing --
     # mindex = min(cnum,params.max_mindex)
-    mindex = min(cnum,5)#params.max_mindex)
-    # mindex = cnum
+    # mindex = min(cnum,5)#params.max_mindex)
+    mindex = min(cnum,params.max_mindex)
+    mindex = cnum
 
     # -- noise level --
     sigma = optional(params,'sigma',0.)
@@ -75,16 +79,20 @@ def sample_var(vals,data,cnum,params):
 
 
     # -- [var term] --
-    # t_sigma = compute_target_sigma(sigma/255.,mindex)
-    # print("t_sigma: ",t_sigma)
-    t_sigma = sigma#/np.sqrt(mindex)
+    mindex = data.shape[-2]
+    t_sigma = compute_target_sigma(sigma,mindex)
+    print("t_sigma: ",t_sigma,sigma,mindex)
+    # t_sigma = sigma#/np.sqrt(mindex)
     mean = data[:,:,:,:,:].mean(-2,keepdim=True)
     # mean = data[:,:,:,:mindex,:].mean(-2,keepdim=True)
     # mean = data[:,:,:,:1]#.mean(-2,keepdim=True)
     data_zm = data[:,:,:,:] - mean
     # data_zm = data[:,:,:,:cnum] - mean
     tmp = ((data_zm)**2).mean(-1).pow(0.5)
-    vals[...] = th.abs((tmp - t_sigma)).mean(-1) + (tmp**2).mean(-1)
+    # ref = data[...,[0],:]
+    ref = data[...,:2,:].mean(-2,keepdim=True)
+    dref =  data[:,:,:,:] - ref
+    vals[...] = ((tmp - t_sigma)**2).mean(-1) + (dref**2).mean((-2,-1))
     # vals[...] = ((data_zm)**2).mean((-2,-1))
     # vals[...] = th.rand_like(vals)**2
 
@@ -167,12 +175,6 @@ def keep_meaned_data_different(data,cnum,mindex):
 #     deltas = rearrange(deltas,'b w s n p1 p2 -> (b w s n) p1 p2')
 #     print("deltas.shape: ",deltas.shape)
 #     th.linalg.svd(deltas
-
-def compute_target_sigma(sigma,m):
-    var = sigma**2
-    t_sigma2 = ((m-1)/m)**2 * var + (m-1)/(m**2) * var
-    t_sigma = math.sqrt(t_sigma2)
-    return t_sigma
 
 def sample_var_blur(vals,data,cnum,params):
 

@@ -31,15 +31,15 @@ from .inds import *
 #
 # -----------------------------
 
-def propose_state(state,pstate,data,sigma,cnum):
+def propose_state(state,pstate,data,sigma,cnum,params):
 
     # -- propose samples to search -
-    candidates = get_candidate_samples(state,data,sigma,cnum)
+    candidates = get_candidate_samples(state,data,sigma,cnum,params)
     prop_samples = select_samples_to_search(candidates,pstate.nsearch,cnum)
     # should be (B,P,S)
 
     # -- fill proposal state with according to new samples --
-    fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum)
+    fill_proposed_state(pstate,state,prop_samples,data,sigma,cnum,params)
 
 # -------------------------------------------------------
 #
@@ -48,7 +48,7 @@ def propose_state(state,pstate,data,sigma,cnum):
 #
 # ------------------------------------------------------
 
-def get_candidate_samples(state,data,sigma,cnum):
+def get_candidate_samples(state,data,sigma,cnum,params):
 
     # -- shapes --
     device = data.device
@@ -62,7 +62,7 @@ def get_candidate_samples(state,data,sigma,cnum):
     for p in range(nparticles):
 
         # -- reference info --
-        ref_num = get_ref_num(state,cnum)
+        ref_num = get_ref_num(state,cnum,params)
         ref = th.mean(state.vecs[:,p,:ref_num],1,keepdim=True)
 
         # -- compute order --

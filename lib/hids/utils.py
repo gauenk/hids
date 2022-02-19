@@ -1,9 +1,18 @@
 
+# -- python --
+import math
+
 # -- linalg --
 import torch as th
 import numpy as np
 from einops import rearrange,repeat
 
+
+def compute_target_sigma(sigma,m):
+    var = sigma**2
+    t_sigma2 = ((m-1)/m)**2 * var + (m-1)/(m**2) * var
+    t_sigma = math.sqrt(t_sigma2)
+    return t_sigma
 
 def compare_inds(gt,prop,mbatch=True):
     delta = th.abs(gt[:,None,:] - prop[:,:,None])

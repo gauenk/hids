@@ -52,8 +52,8 @@ def img_patches():
 
     # -- create experiment fields --
     device = 'cuda:0'
-    fields = {"sigma":[30.,50.],"dataset":["davis"],
-              "ps": [13],"npatches":[10],"nneigh":[15],
+    fields = {"sigma":[10.,30.,50.],"dataset":["davis"],
+              "ps": [11],"npatches":[10],"nneigh":[15],
               "snum":[100],"num":[500],"seed":[123]
     }
     exps = testing.get_exp_mesh(fields)
@@ -95,13 +95,15 @@ def img_patches():
         basic = noisy.clone()
 
         # -- sample patches --
-        pnoisy,pclean,sample_inds = hids.imgs2patches(noisy,clean,sigma,ps,npatches,num)
+        pt = 1
+        pnoisy,pclean,sample_inds = hids.imgs2patches(noisy,clean,sigma,ps,
+                                                      npatches,num,**{'pt':pt})
 
         # -- get remaining patches --
-        pbasic = get_patches(basic,sample_inds,ps,mode="batch")
-        pbasic_7 = get_patches(basic,sample_inds,7,mode="batch")
-        pnoisy_7 = get_patches(noisy,sample_inds,7,mode="batch")
-        pclean_7 = get_patches(clean,sample_inds,7,mode="batch")
+        pbasic = get_patches(basic,sample_inds,ps,mode="batch",pt=pt)
+        pbasic_7 = get_patches(basic,sample_inds,7,mode="batch",pt=pt)
+        pnoisy_7 = get_patches(noisy,sample_inds,7,mode="batch",pt=pt)
+        pclean_7 = get_patches(clean,sample_inds,7,mode="batch",pt=pt)
 
         # -- correct shape --
         pnoisy = rearrange(pnoisy,'b p n t c h w -> (b p) n (t c h w)')
@@ -144,6 +146,9 @@ def img_patches():
             print("pclean_7.shape: ",pclean_7.shape)
             print("-="*35)
 
+        # -- rescale --
+        sigma = sigma/255.
+
         # -- gt --
         gt_vals,gt_inds = hids.subset_search(pclean_7*255.,0.,snum,"l2")
 
@@ -161,10 +166,13 @@ def img_patches():
 
         # -- ours [v1] --
         v1_vals,v1_inds = hids.subset_search(pnoisy,sigma,snum,"beam",
-                                             num_search = 10, max_mindex=3)
+                                             bwidth=10,swidth=10,
+                                             num_search = 10, max_mindex=3,
+                                             svf_method="svar")
 
         # -- ours [v2] --
-        v2_vals,v2_inds = hids.subset_search(pnoisy,sigma,snum,"beam",bwidth=30,
+        v2_vals,v2_inds = hids.subset_search(pnoisy,sigma,snum,"beam",
+                                             bwidth=10,swidth=10,
                                              num_search=10, max_mindex=3)
 
         # -- compare inds --
@@ -189,6 +197,10 @@ def img_patches():
         print(vb7_cmp,vb7_cmp.mean())
         print(v1_cmp,v1_cmp.mean())
         print(v2_cmp,v2_cmp.mean())
+
+        print("-="*20)
+        print(th.stack([l2_cmp,v1_cmp],-1))
+        print("-="*20)
 
         # -- compare psnr --
         gt_psnr = hids.psnr_at_inds(noisy,clean,gt_inds)

@@ -1,6 +1,7 @@
 
 import torch as th
 from .l2_search import l2_search,l2_subset
+from .needle_search import needle_subset
 from .coreset_growth import exec_coreset_growth
 from .beam_search import exec_beam_search
 from .rand_hypo import rand_hypo
@@ -12,6 +13,10 @@ from .imgs2patches import imgs2patches
 def subset_search(data,sigma,snum,method,**kwargs):
     if method == "l2":
         output = l2_subset(data,sigma,snum)
+        th.cuda.empty_cache()
+        return output
+    elif method == "needle":
+        output = needle_subset(data,sigma,snum)
         th.cuda.empty_cache()
         return output
     elif method == "coreset":

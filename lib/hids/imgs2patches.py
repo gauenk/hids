@@ -25,18 +25,19 @@ def imgs2patches(noisy,clean,sigma,ps,npatches,nneigh,**kwargs):
     """
 
     # -- hyper-params --
-    pt,c = 2,3
+    pt = optional(kwargs,'pt',2)
+    c = optional(kwargs,'c',3)
 
     # -- select candidate inds --
     srch_inds = select_patch_inds(clean,npatches,ps)
 
     # -- return neighbors of "search indices" via l2 search --
-    inds = exec_sim_search(noisy,srch_inds,sigma,k=nneigh,ps=ps)
+    inds = exec_sim_search(noisy,srch_inds,sigma,k=nneigh,ps=ps,pt=pt)
     assert th.any(inds==-1).item() is False, "must have no invalid srch_inds"
 
     # -- create patches from inds --
-    pnoisy = construct_patches(noisy,inds,ps)
-    pclean = construct_patches(clean,inds,ps)
+    pnoisy = construct_patches(noisy,inds,ps,pt)
+    pclean = construct_patches(clean,inds,ps,pt)
 
     return pnoisy,pclean,inds
 
@@ -79,13 +80,12 @@ def select_patch_inds(img,npatches,ps):
 
     return inds
 
-def construct_patches(img,inds,ps,**kwargs):
+def construct_patches(img,inds,ps,pt):
 
     # -- init patches --
     device = inds.device
     B,N,k = inds.shape
     B,T,c,H,W = img.shape
-    pt = optional(kwargs,'pt',2)
 
     # -- allocate memo --
     patches = th.zeros((B,N,k,pt,c,ps,ps),dtype=th.float,device=device)

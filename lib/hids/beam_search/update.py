@@ -101,7 +101,7 @@ def terminate_early(state,data,sigma,snum,cnum,sv_fxn,sv_params):
     for p in range(nparticles):
 
         # -- reference info --
-        ref_num = get_ref_num(state,cnum)
+        ref_num = get_ref_num(state,cnum,sv_params)
         ref = th.mean(state.vecs[:,p,:ref_num],1,keepdim=True)
 
         # -- compute order --

@@ -25,9 +25,9 @@ def compute_ordering(state,ref,data,s_sigma):
     # state.delta[th.nonzero(state.delta<0.)] = 0.
     state.order[...] = th.argsort(state.delta,1)
 
-def get_ref_num(state,cnum):
+def get_ref_num(state,cnum,params):
     if state.ref_type == "cnum":
-        return min(10,cnum)
+        return 1#min(params.max_mindex,cnum)
     else:
         raise KeyError(f"Reference index not assigned [{cnum}]")
 
